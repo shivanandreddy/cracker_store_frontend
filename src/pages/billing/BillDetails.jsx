@@ -35,6 +35,41 @@ const BillDetails = () => {
     fetchBill();
   }, [id]);
 
+  const handleWhatsApp = () => {
+  const phone = bill.customerPhone?.replace(/\D/g, "");
+
+  if (!phone) {
+    alert("Customer phone number is not available.");
+    return;
+  }
+
+  const message = `
+Invoice: ${bill.billNumber}
+Customer: ${bill.customerName || "Customer"}
+
+${bill.items
+  .map(
+    (item) =>
+      `${item.name} x ${item.quantity} = ₹${item.total.toFixed(2)}`
+  )
+  .join("\n")}
+
+Subtotal: ₹${bill.subtotal.toFixed(2)}
+Discount: ₹${bill.discount.toFixed(2)}
+Grand Total: ₹${bill.grandTotal.toFixed(2)}
+
+Payment: ${bill.paymentMethod.toUpperCase()}
+
+Thank you for your purchase!
+`;
+
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(
+    message
+  )}`;
+
+  window.open(whatsappUrl, "_blank");
+};
+
   const formatDate = (date) => {
     if (!date) return "-";
 
@@ -115,6 +150,13 @@ const BillDetails = () => {
           >
             🖨️ Print Bill
           </button>
+
+          <button
+  onClick={handleWhatsApp}
+  className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+>
+  Share on WhatsApp
+</button>
         </div>
       </div>
 
