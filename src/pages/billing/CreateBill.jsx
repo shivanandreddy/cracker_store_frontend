@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -20,6 +19,9 @@ const CreateBill = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [selectedProductId, setSelectedProductId] = useState(""); 
+  const [productSearch, setProductSearch] = useState("");
+
   // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
@@ -33,10 +35,7 @@ const CreateBill = () => {
       } catch (error) {
         console.error("Fetch Products Error:", error);
 
-        setError(
-          error.response?.data?.message ||
-            "Failed to load products."
-        );
+        setError(error.response?.data?.message || "Failed to load products.");
       } finally {
         setLoadingProducts(false);
       }
@@ -49,14 +48,12 @@ const CreateBill = () => {
   const addProduct = (product) => {
     setError("");
 
-    const existingItem = items.find(
-      (item) => item.productId === product._id
-    );
+    const existingItem = items.find((item) => item.productId === product._id);
 
     if (existingItem) {
       if (existingItem.quantity >= product.stockQuantity) {
         setError(
-          `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`
+          `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`,
         );
         return;
       }
@@ -68,8 +65,8 @@ const CreateBill = () => {
                 ...item,
                 quantity: item.quantity + 1,
               }
-            : item
-        )
+            : item,
+        ),
       );
 
       return;
@@ -90,9 +87,7 @@ const CreateBill = () => {
 
   // Update quantity
   const updateQuantity = (productId, quantity) => {
-    const product = products.find(
-      (item) => item._id === productId
-    );
+    const product = products.find((item) => item._id === productId);
 
     if (!product) return;
 
@@ -105,7 +100,7 @@ const CreateBill = () => {
 
     if (newQuantity > product.stockQuantity) {
       setError(
-        `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`
+        `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`,
       );
       return;
     }
@@ -119,16 +114,14 @@ const CreateBill = () => {
               ...item,
               quantity: newQuantity,
             }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
   // Increase quantity
   const increaseQuantity = (productId) => {
-    const item = items.find(
-      (item) => item.productId === productId
-    );
+    const item = items.find((item) => item.productId === productId);
 
     if (!item) return;
 
@@ -137,9 +130,7 @@ const CreateBill = () => {
 
   // Decrease quantity
   const decreaseQuantity = (productId) => {
-    const item = items.find(
-      (item) => item.productId === productId
-    );
+    const item = items.find((item) => item.productId === productId);
 
     if (!item) return;
 
@@ -154,9 +145,7 @@ const CreateBill = () => {
   // Remove item
   const removeItem = (productId) => {
     setItems((previous) =>
-      previous.filter(
-        (item) => item.productId !== productId
-      )
+      previous.filter((item) => item.productId !== productId),
     );
 
     setError("");
@@ -164,27 +153,47 @@ const CreateBill = () => {
 
   // Calculate subtotal
   const subtotal = useMemo(() => {
-    return items.reduce(
-      (total, item) =>
-        total + item.price * item.quantity,
-      0
-    );
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [items]);
 
   // Calculate discount
-  const discountAmount = Math.min(
-    Math.max(Number(discount) || 0, 0),
-    subtotal
-  );
+  const discountAmount = Math.min(Math.max(Number(discount) || 0, 0), subtotal);
 
   // Calculate grand total
   const grandTotal = subtotal - discountAmount;
 
   // Total quantity
-  const totalQuantity = items.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+  const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
+
+  //Product Search Logic
+  const filteredProducts = useMemo(() => {
+    const search = productSearch.toLowerCase().trim();
+
+    if (!search) {
+      return products;
+    }
+
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(search) ||
+        product.sku.toLowerCase().includes(search) ||
+        product.category.toLowerCase().includes(search),
+    );
+  }, [products, productSearch]);
+
+  const handleProductSelect = (productId) => {
+    setSelectedProductId(productId);
+
+    const product = products.find((item) => item._id === productId);
+
+    if (!product) return;
+
+    addProduct(product);
+
+    // Clear selection after adding
+    setSelectedProductId("");
+    setProductSearch("");
+  };
 
   // Create bill
   const handleSubmit = async (e) => {
@@ -199,9 +208,7 @@ const CreateBill = () => {
     }
 
     if (customerPhone && !/^\d{10}$/.test(customerPhone)) {
-      setError(
-        "Customer phone number must contain exactly 10 digits."
-      );
+      setError("Customer phone number must contain exactly 10 digits.");
       return;
     }
 
@@ -211,9 +218,7 @@ const CreateBill = () => {
     }
 
     if (Number(discount) > subtotal) {
-      setError(
-        "Discount cannot be greater than the subtotal."
-      );
+      setError("Discount cannot be greater than the subtotal.");
       return;
     }
 
@@ -251,10 +256,7 @@ const CreateBill = () => {
     } catch (error) {
       console.error("Create Bill Error:", error);
 
-      setError(
-        error.response?.data?.message ||
-          "Failed to create bill."
-      );
+      setError(error.response?.data?.message || "Failed to create bill.");
     } finally {
       setSaving(false);
     }
@@ -313,9 +315,7 @@ const CreateBill = () => {
                   <input
                     type="text"
                     value={customerName}
-                    onChange={(e) =>
-                      setCustomerName(e.target.value)
-                    }
+                    onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Enter customer name"
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -332,7 +332,7 @@ const CreateBill = () => {
                     value={customerPhone}
                     onChange={(e) =>
                       setCustomerPhone(
-                        e.target.value.replace(/\D/g, "").slice(0, 10)
+                        e.target.value.replace(/\D/g, "").slice(0, 10),
                       )
                     }
                     placeholder="10 digit mobile number"
@@ -376,86 +376,92 @@ const CreateBill = () => {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        navigate("/products/add")
-                      }
+                      onClick={() => navigate("/products/add")}
                       className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
                       Add Product
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {products.map((product) => {
-                      const selectedItem = items.find(
-                        (item) =>
-                          item.productId === product._id
-                      );
+                  
+<div className="space-y-4">
+  
 
-                      const outOfStock =
-                        product.stockQuantity <= 0;
+  {/* Product Dropdown */}
+  <div>
+    <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      Select Product
+    </label>
 
-                      return (
-                        <div
-                          key={product._id}
-                          className="border border-gray-200 dark:border-gray-700 rounded-xl p-4"
-                        >
-                          <div className="flex justify-between gap-3">
-                            <div>
-                              <h3 className="font-semibold text-gray-900 dark:text-white">
-                                {product.name}
-                              </h3>
+    <select
+      value={selectedProductId}
+      onChange={(e) =>
+        handleProductSelect(e.target.value)
+      }
+      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="">
+        {productSearch
+          ? "Select a matching product"
+          : "Select a product"}
+      </option>
 
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {product.sku}
-                              </p>
-                            </div>
+      {filteredProducts.map((product) => {
+        const selectedItem = items.find(
+          (item) => item.productId === product._id
+        );
 
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                              ₹
-                              {Number(
-                                product.sellingPrice
-                              ).toFixed(2)}
-                            </span>
-                          </div>
+        const outOfStock =
+          product.stockQuantity <= 0;
 
-                          <div className="flex items-center justify-between mt-4">
-                            <span
-                              className={`text-sm ${
-                                outOfStock
-                                  ? "text-red-600"
-                                  : product.stockQuantity <= 5
-                                  ? "text-orange-600"
-                                  : "text-green-600"
-                              }`}
-                            >
-                              Stock: {product.stockQuantity}{" "}
-                              {product.unit}
-                            </span>
+        return (
+          <option
+            key={product._id}
+            value={product._id}
+            disabled={outOfStock}
+          >
+            {product.name} | {product.sku} | ₹
+            {Number(product.sellingPrice).toFixed(2)} |
+            Stock: {product.stockQuantity}
+            {selectedItem
+              ? ` | Added: ${selectedItem.quantity}`
+              : ""}
+            {outOfStock ? " | Out of Stock" : ""}
+          </option>
+        );
+      })}
+    </select>
+  </div>
 
-                            {selectedItem ? (
-                              <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                Added: {selectedItem.quantity}
-                              </span>
-                            ) : null}
-                          </div>
+  {/* Search Result Count */}
+  <div className="flex items-center justify-between text-sm">
+    <span className="text-gray-500 dark:text-gray-400">
+      {filteredProducts.length} product
+      {filteredProducts.length !== 1 ? "s" : ""} found
+    </span>
 
-                          <button
-                            type="button"
-                            disabled={outOfStock}
-                            onClick={() => addProduct(product)}
-                            className="w-full mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
-                          >
-                            {outOfStock
-                              ? "Out of Stock"
-                              : selectedItem
-                              ? "Add Another"
-                              : "Add to Bill"}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
+    {productSearch && (
+      <button
+        type="button"
+        onClick={() => setProductSearch("")}
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        Clear Search
+      </button>
+    )}
+  </div>
+
+  {/* No Results */}
+  {productSearch && filteredProducts.length === 0 && (
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 text-center">
+      <p className="text-gray-500 dark:text-gray-400">
+        No products found for "{productSearch}"
+      </p>
+    </div>
+  )}
+</div>
+
+
                 )}
               </div>
             </div>
@@ -521,9 +527,7 @@ const CreateBill = () => {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    decreaseQuantity(
-                                      item.productId
-                                    )
+                                    decreaseQuantity(item.productId)
                                   }
                                   className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                                 >
@@ -538,7 +542,7 @@ const CreateBill = () => {
                                   onChange={(e) =>
                                     updateQuantity(
                                       item.productId,
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                   className="w-16 text-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-1.5 text-gray-900 dark:text-white"
@@ -547,9 +551,7 @@ const CreateBill = () => {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    increaseQuantity(
-                                      item.productId
-                                    )
+                                    increaseQuantity(item.productId)
                                   }
                                   className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                                 >
@@ -559,19 +561,13 @@ const CreateBill = () => {
                             </td>
 
                             <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">
-                              ₹
-                              {(
-                                item.price *
-                                item.quantity
-                              ).toFixed(2)}
+                              ₹{(item.price * item.quantity).toFixed(2)}
                             </td>
 
                             <td className="px-6 py-4">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  removeItem(item.productId)
-                                }
+                                onClick={() => removeItem(item.productId)}
                                 className="text-red-600 hover:text-red-700 text-sm font-medium"
                               >
                                 Remove
@@ -597,16 +593,13 @@ const CreateBill = () => {
                             </h3>
 
                             <p className="text-sm text-gray-500">
-                              ₹{item.price.toFixed(2)} /{" "}
-                              {item.unit}
+                              ₹{item.price.toFixed(2)} / {item.unit}
                             </p>
                           </div>
 
                           <button
                             type="button"
-                            onClick={() =>
-                              removeItem(item.productId)
-                            }
+                            onClick={() => removeItem(item.productId)}
                             className="text-red-600 text-sm"
                           >
                             Remove
@@ -617,11 +610,7 @@ const CreateBill = () => {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                decreaseQuantity(
-                                  item.productId
-                                )
-                              }
+                              onClick={() => decreaseQuantity(item.productId)}
                               className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800"
                             >
                               -
@@ -633,11 +622,7 @@ const CreateBill = () => {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                increaseQuantity(
-                                  item.productId
-                                )
-                              }
+                              onClick={() => increaseQuantity(item.productId)}
                               className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800"
                             >
                               +
@@ -645,11 +630,7 @@ const CreateBill = () => {
                           </div>
 
                           <span className="font-semibold text-gray-900 dark:text-white">
-                            ₹
-                            {(
-                              item.price *
-                              item.quantity
-                            ).toFixed(2)}
+                            ₹{(item.price * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -708,9 +689,7 @@ const CreateBill = () => {
                       min="0"
                       step="0.01"
                       value={discount}
-                      onChange={(e) =>
-                        setDiscount(e.target.value)
-                      }
+                      onChange={(e) => setDiscount(e.target.value)}
                       placeholder="0.00"
                       className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-4 py-3 text-gray-900 dark:text-white"
                     />
@@ -737,9 +716,7 @@ const CreateBill = () => {
 
                   <select
                     value={paymentMethod}
-                    onChange={(e) =>
-                      setPaymentMethod(e.target.value)
-                    }
+                    onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white"
                   >
                     <option value="cash">Cash</option>
@@ -754,9 +731,7 @@ const CreateBill = () => {
                   disabled={saving || items.length === 0}
                   className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
                 >
-                  {saving
-                    ? "Creating Bill..."
-                    : "Create Bill"}
+                  {saving ? "Creating Bill..." : "Create Bill"}
                 </button>
 
                 <button
@@ -777,4 +752,3 @@ const CreateBill = () => {
 };
 
 export default CreateBill;
-
