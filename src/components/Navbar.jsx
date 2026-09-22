@@ -1,57 +1,42 @@
 
-import { useEffect, useState } from "react";
-
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode((previous) => !previous);
-  };
-
   return (
-    <header className="sticky top-0 z-30 h-16 bg-orange-800 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div className="h-full flex items-center justify-between px-4 sm:px-6">
-        {/* Mobile Menu Button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 rounded-lg text-white dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-            aria-label="Toggle menu"
-          >
-            {sidebarOpen ? "✕" : "☰"}
-          </button>
-
-          <h2 className="text-base sm:text-lg font-semibold text-white dark:text-white">
-            Kanakadurga Fireworks
-          </h2>
-        </div>
-
-        {/* Theme Button */}
+    <header className="h-16 bg-white dark:bg-gray-900 text-white bg-orange-500 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu Toggle Button */}
         <button
-          onClick={toggleDarkMode}
-          className="px-3 py-2 sm:px-4 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white text-sm transition"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden p-2 rounded-lg text-white dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/30 dark:hover:text-orange-400 focus:outline-none transition-colors"
+          aria-label="Toggle Sidebar"
         >
-          {darkMode ? "☀️" : "🌙"}
-          <span className="hidden sm:inline ml-1">
-            {darkMode ? "Light" : "Dark"}
-          </span>
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
         </button>
+
+        <h2 className="text-base font-semibold text-white dark:text-orange-400">
+          Kanakadurga Fireworks
+        </h2>
+      </div>
+
+      {/* Right side */}
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
+          Welcome back!
+        </span>
       </div>
     </header>
   );
 };
 
 export default Navbar;
-
