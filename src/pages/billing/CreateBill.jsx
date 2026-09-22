@@ -386,7 +386,7 @@ const CreateBill = () => {
                   
 <div className="space-y-4">
   
-
+<label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"> Search Product </label> <input type="text" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search by product name, SKU or category..." className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" /> 
   {/* Product Dropdown */}
   <div>
     <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
