@@ -1,12 +1,38 @@
+import { useState, useEffect } from 'react';
+import { Moon, Sun } from 'lucide-react';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
+  const [darkMode, setDarkMode] = useState(() => {
+    return (
+      localStorage.getItem('theme') === 'dark' ||
+      (!('theme' in localStorage) &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
+  });
+
+  // Sync state changes with the HTML root class and localStorage
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
+
+  const toggleTheme = () => {
+    setDarkMode((prev) => !prev);
+  };
+
   return (
-    <header className="h-16 bg-white dark:bg-gray-900 text-white bg-orange-500 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20">
+    <header className="h-16 bg-orange-500 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors">
       <div className="flex items-center gap-3">
         {/* Hamburger Menu Toggle Button */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2 rounded-lg text-white dark:text-gray-300 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-950/30 dark:hover:text-orange-400 focus:outline-none transition-colors"
+          className="lg:hidden p-2 rounded-lg text-white hover:bg-orange-600 dark:hover:bg-gray-800 focus:outline-none transition-colors"
           aria-label="Toggle Sidebar"
         >
           <svg
@@ -29,11 +55,20 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
         </h2>
       </div>
 
-      {/* Right side */}
+      {/* Right side dark mode toggle */}
       <div className="flex items-center gap-3">
-        <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">
-          Welcome back!
-        </span>
+        {/* Dark Mode Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle Theme"
+          className="rounded-md p-2 text-white hover:bg-orange-600 dark:hover:bg-gray-800 transition"
+        >
+          {darkMode ? (
+            <Sun size={20} className="text-amber-400" />
+          ) : (
+            <Moon size={20} />
+          )}
+        </button>
       </div>
     </header>
   );
