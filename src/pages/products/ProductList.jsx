@@ -10,6 +10,11 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Search & Pagination States
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -55,6 +60,29 @@ const ProductList = () => {
     }
   };
 
+  // Filter products based on search input (name, SKU, category)
+  const filteredProducts = products.filter((product) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(term) ||
+      product.sku?.toLowerCase().includes(term) ||
+      product.category?.toLowerCase().includes(term)
+    );
+  });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Reset to page 1 if search results change and current page exceeds total
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm, totalPages, currentPage]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -98,216 +126,121 @@ const ProductList = () => {
         </div>
       )}
 
-      {/* Product count */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Total Products
-        </p>
+      {/* Stats & Search Bar Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        {/* Product Count Card */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Total Products
+          </p>
 
-        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
-          {products.length}
-        </p>
-      </div>
-
-      {/* Desktop Table */}
-      <div className="hidden md:block bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  Product
-                </th>
-
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  SKU
-                </th>
-
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  Category
-                </th>
-
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  Selling Price
-                </th>
-
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  Stock
-                </th>
-
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  Status
-                </th>
-
-                {(user?.role === "admin" ||
-                  user?.role === "useradmin") && (
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Actions
-                  </th>
-                )}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {products.map((product) => (
-                <tr
-                  key={product._id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900 dark:text-white">
-                      {product.name}
-                    </p>
-
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {product.unit}
-                    </p>
-                  </td>
-
-                  <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                    {product.sku}
-                  </td>
-
-                  <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                    {product.category}
-                  </td>
-
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                    ₹{Number(product.sellingPrice).toFixed(2)}
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <span
-                      className={
-                        product.stockQuantity <= 5
-                          ? "text-red-600 font-semibold"
-                          : "text-gray-700 dark:text-gray-300"
-                      }
-                    >
-                      {product.stockQuantity}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      Active
-                    </span>
-                  </td>
-
-                  {(user?.role === "admin" ||
-                    user?.role === "useradmin") && (
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <Link
-                          to={`/products/edit/${product._id}`}
-                          className="px-3 py-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400"
-                        >
-                          Edit
-                        </Link>
-
-                        {user?.role === "admin" && (
-                          <button
-                            onClick={() =>
-                              handleDelete(product._id)
-                            }
-                            className="px-3 py-1.5 rounded-md bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">
+            {products.length}
+          </p>
         </div>
 
-        {products.length === 0 && (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            No products found.
+        {/* Search Bar */}
+        <div className="md:col-span-2">
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-gray-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by product name, SKU, or category..."
+              className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm text-sm"
+            />
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Mobile Cards */}
-      <div className="md:hidden space-y-4">
-        {products.map((product) => (
+      {/* Product Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {currentProducts.map((product) => (
           <div
             key={product._id}
-            className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5"
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 shadow-sm hover:shadow-md transition"
           >
-            <div className="flex justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">
+            {/* Product Name */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                   {product.name}
                 </h3>
 
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {product.sku}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  SKU: {product.sku}
                 </p>
               </div>
 
-              <span className="px-2 py-1 h-fit rounded-full text-xs bg-green-100 text-green-700">
-                Active
+              {/* Stock Status */}
+              <span
+                className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${
+                  Number(product.stockQuantity) <= 5
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                }`}
+              >
+                {Number(product.stockQuantity) <= 5 ? "Low Stock" : "In Stock"}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-5">
-              <div>
-                <p className="text-xs text-gray-500">
-                  Category
-                </p>
-                <p className="font-medium dark:text-white">
-                  {product.category}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
+            {/* Stock Details */}
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Stock
                 </p>
-                <p className="font-medium dark:text-white">
-                  {product.stockQuantity} {product.unit}
+
+                <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
+                  {product.stockQuantity}
+                </p>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {product.unit}
                 </p>
               </div>
 
-              <div>
-                <p className="text-xs text-gray-500">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Selling Price
                 </p>
-                <p className="font-medium dark:text-white">
-                  ₹{Number(product.sellingPrice).toFixed(2)}
-                </p>
-              </div>
 
-              <div>
-                <p className="text-xs text-gray-500">
-                  GST
-                </p>
-                <p className="font-medium dark:text-white">
-                  {product.gst}%
+                <p className="mt-1 text-xl font-bold text-green-600 dark:text-green-400">
+                  ₹{Number(product.sellingPrice || 0).toLocaleString("en-IN")}
                 </p>
               </div>
             </div>
 
-            {(user?.role === "admin" ||
-              user?.role === "useradmin") && (
-              <div className="flex gap-2 mt-5">
+            {/* Category */}
+            <div className="mt-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Category
+              </p>
+
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-1">
+                {product.category}
+              </p>
+            </div>
+
+            {/* Actions */}
+            {(user?.role === "admin" || user?.role === "useradmin") && (
+              <div className="mt-5 flex gap-2">
                 <Link
                   to={`/products/edit/${product._id}`}
-                  className="flex-1 text-center px-3 py-2 rounded-lg bg-blue-600 text-white"
+                  className="flex-1 text-center px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
                 >
                   Edit
                 </Link>
 
                 {user?.role === "admin" && (
                   <button
-                    onClick={() =>
-                      handleDelete(product._id)
-                    }
-                    className="flex-1 px-3 py-2 rounded-lg bg-red-600 text-white"
+                    onClick={() => handleDelete(product._id)}
+                    className="flex-1 text-center px-3 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
                   >
                     Delete
                   </button>
@@ -316,13 +249,49 @@ const ProductList = () => {
             )}
           </div>
         ))}
-
-        {products.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No products found.
-          </div>
-        )}
       </div>
+
+      {filteredProducts.length === 0 && (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+          No matching products found.
+        </div>
+      )}
+
+      {/* Pagination Bar */}
+      {filteredProducts.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 gap-4 shadow-sm">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+            Showing <span className="font-medium text-gray-900 dark:text-white">{indexOfFirstItem + 1}</span> to{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {Math.min(indexOfLastItem, filteredProducts.length)}
+            </span>{" "}
+            of <span className="font-medium text-gray-900 dark:text-white">{filteredProducts.length}</span> results
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Previous
+            </button>
+
+            <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

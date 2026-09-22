@@ -124,10 +124,10 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+     <div className="space-y-6">
 
       {/* Header */}
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Add Product
         </h1>

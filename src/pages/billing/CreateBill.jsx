@@ -950,6 +950,7 @@ const CreateBill = () => {
                     <option value="cash">Cash</option>
                     <option value="upi">UPI</option>
                     <option value="card">Card</option>
+                    <option value="credit">Credit</option>
                   </select>
                 </div>
 
