@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
@@ -10,6 +11,7 @@ const CreateBill = () => {
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
   const [discount, setDiscount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
@@ -19,8 +21,12 @@ const CreateBill = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [selectedProductId, setSelectedProductId] = useState(""); 
+  // Product search
   const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] =
+    useState(false);
+
+  const productSearchRef = useRef(null);
 
   // Fetch products
   useEffect(() => {
@@ -35,7 +41,10 @@ const CreateBill = () => {
       } catch (error) {
         console.error("Fetch Products Error:", error);
 
-        setError(error.response?.data?.message || "Failed to load products.");
+        setError(
+          error.response?.data?.message ||
+            "Failed to load products."
+        );
       } finally {
         setLoadingProducts(false);
       }
@@ -48,13 +57,18 @@ const CreateBill = () => {
   const addProduct = (product) => {
     setError("");
 
-    const existingItem = items.find((item) => item.productId === product._id);
+    const existingItem = items.find(
+      (item) => item.productId === product._id
+    );
 
     if (existingItem) {
-      if (existingItem.quantity >= product.stockQuantity) {
+      if (
+        existingItem.quantity >= product.stockQuantity
+      ) {
         setError(
-          `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`,
+          `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`
         );
+
         return;
       }
 
@@ -65,8 +79,8 @@ const CreateBill = () => {
                 ...item,
                 quantity: item.quantity + 1,
               }
-            : item,
-        ),
+            : item
+        )
       );
 
       return;
@@ -87,7 +101,9 @@ const CreateBill = () => {
 
   // Update quantity
   const updateQuantity = (productId, quantity) => {
-    const product = products.find((item) => item._id === productId);
+    const product = products.find(
+      (item) => item._id === productId
+    );
 
     if (!product) return;
 
@@ -100,8 +116,9 @@ const CreateBill = () => {
 
     if (newQuantity > product.stockQuantity) {
       setError(
-        `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`,
+        `Only ${product.stockQuantity} ${product.unit}(s) available for ${product.name}.`
       );
+
       return;
     }
 
@@ -114,14 +131,16 @@ const CreateBill = () => {
               ...item,
               quantity: newQuantity,
             }
-          : item,
-      ),
+          : item
+      )
     );
   };
 
   // Increase quantity
   const increaseQuantity = (productId) => {
-    const item = items.find((item) => item.productId === productId);
+    const item = items.find(
+      (item) => item.productId === productId
+    );
 
     if (!item) return;
 
@@ -130,7 +149,9 @@ const CreateBill = () => {
 
   // Decrease quantity
   const decreaseQuantity = (productId) => {
-    const item = items.find((item) => item.productId === productId);
+    const item = items.find(
+      (item) => item.productId === productId
+    );
 
     if (!item) return;
 
@@ -145,7 +166,9 @@ const CreateBill = () => {
   // Remove item
   const removeItem = (productId) => {
     setItems((previous) =>
-      previous.filter((item) => item.productId !== productId),
+      previous.filter(
+        (item) => item.productId !== productId
+      )
     );
 
     setError("");
@@ -153,47 +176,86 @@ const CreateBill = () => {
 
   // Calculate subtotal
   const subtotal = useMemo(() => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return items.reduce(
+      (total, item) =>
+        total + item.price * item.quantity,
+      0
+    );
   }, [items]);
 
   // Calculate discount
-  const discountAmount = Math.min(Math.max(Number(discount) || 0, 0), subtotal);
+  const discountAmount = Math.min(
+    Math.max(Number(discount) || 0, 0),
+    subtotal
+  );
 
   // Calculate grand total
   const grandTotal = subtotal - discountAmount;
 
   // Total quantity
-  const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
+  const totalQuantity = items.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
 
-  //Product Search Logic
+  // Product Search Logic
   const filteredProducts = useMemo(() => {
-    const search = productSearch.toLowerCase().trim();
+    const search = productSearch
+      .toLowerCase()
+      .trim();
 
     if (!search) {
-      return products;
+      return [];
     }
 
-    return products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(search) ||
-        product.sku.toLowerCase().includes(search) ||
-        product.category.toLowerCase().includes(search),
-    );
+    return products.filter((product) => {
+      return (
+        product.name
+          ?.toLowerCase()
+          .includes(search) ||
+        product.sku
+          ?.toLowerCase()
+          .includes(search) ||
+        product.category
+          ?.toLowerCase()
+          .includes(search)
+      );
+    });
   }, [products, productSearch]);
 
-  const handleProductSelect = (productId) => {
-    setSelectedProductId(productId);
-
-    const product = products.find((item) => item._id === productId);
-
+  // Select product from dropdown
+  const handleProductSelect = (product) => {
     if (!product) return;
 
     addProduct(product);
 
-    // Clear selection after adding
-    setSelectedProductId("");
     setProductSearch("");
+    setShowProductDropdown(false);
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        productSearchRef.current &&
+        !productSearchRef.current.contains(event.target)
+      ) {
+        setShowProductDropdown(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
   // Create bill
   const handleSubmit = async (e) => {
@@ -207,8 +269,14 @@ const CreateBill = () => {
       return;
     }
 
-    if (customerPhone && !/^\d{10}$/.test(customerPhone)) {
-      setError("Customer phone number must contain exactly 10 digits.");
+    if (
+      customerPhone &&
+      !/^\d{10}$/.test(customerPhone)
+    ) {
+      setError(
+        "Customer phone number must contain exactly 10 digits."
+      );
+
       return;
     }
 
@@ -218,7 +286,10 @@ const CreateBill = () => {
     }
 
     if (Number(discount) > subtotal) {
-      setError("Discount cannot be greater than the subtotal.");
+      setError(
+        "Discount cannot be greater than the subtotal."
+      );
+
       return;
     }
 
@@ -235,15 +306,16 @@ const CreateBill = () => {
         })),
 
         discount: discountAmount,
-
         paymentMethod,
       };
 
-      const response = await api.post("/bills", payload);
+      const response = await api.post(
+        "/bills",
+        payload
+      );
 
       setSuccess("Bill created successfully.");
 
-      // Store created bill ID temporarily
       const billId = response.data.bill?._id;
 
       setTimeout(() => {
@@ -256,7 +328,10 @@ const CreateBill = () => {
     } catch (error) {
       console.error("Create Bill Error:", error);
 
-      setError(error.response?.data?.message || "Failed to create bill.");
+      setError(
+        error.response?.data?.message ||
+          "Failed to create bill."
+      );
     } finally {
       setSaving(false);
     }
@@ -271,7 +346,8 @@ const CreateBill = () => {
         </h1>
 
         <p className="mt-1 text-gray-500 dark:text-gray-400">
-          Create a new customer bill and update inventory automatically.
+          Create a new customer bill and update
+          inventory automatically.
         </p>
       </div>
 
@@ -291,7 +367,7 @@ const CreateBill = () => {
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left side */}
+          {/* LEFT SIDE */}
           <div className="xl:col-span-2 space-y-6">
             {/* Customer Information */}
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
@@ -315,7 +391,9 @@ const CreateBill = () => {
                   <input
                     type="text"
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) =>
+                      setCustomerName(e.target.value)
+                    }
                     placeholder="Enter customer name"
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -332,7 +410,9 @@ const CreateBill = () => {
                     value={customerPhone}
                     onChange={(e) =>
                       setCustomerPhone(
-                        e.target.value.replace(/\D/g, "").slice(0, 10),
+                        e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10)
                       )
                     }
                     placeholder="10 digit mobile number"
@@ -353,7 +433,8 @@ const CreateBill = () => {
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Select products to add to the bill.
+                      Search and select products to add
+                      to the bill.
                     </p>
                   </div>
 
@@ -376,92 +457,205 @@ const CreateBill = () => {
 
                     <button
                       type="button"
-                      onClick={() => navigate("/products/add")}
+                      onClick={() =>
+                        navigate("/products/add")
+                      }
                       className="mt-4 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
                       Add Product
                     </button>
                   </div>
                 ) : (
-                  
-<div className="space-y-4">
-  
-<label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"> Search Product </label> <input type="text" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search by product name, SKU or category..." className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" /> 
-  {/* Product Dropdown */}
-  <div>
-    <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-      Select Product
-    </label>
+                  <div className="space-y-4">
+                    {/* Search */}
+                    <div
+                      ref={productSearchRef}
+                      className="relative"
+                    >
+                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Search Product
+                      </label>
 
-    <select
-      value={selectedProductId}
-      onChange={(e) =>
-        handleProductSelect(e.target.value)
-      }
-      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-    >
-      <option value="">
-        {productSearch
-          ? "Select a matching product"
-          : "Select a product"}
-      </option>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={productSearch}
+                          onChange={(e) => {
+                            setProductSearch(
+                              e.target.value
+                            );
+                            setShowProductDropdown(true);
+                          }}
+                          onFocus={() => {
+                            if (
+                              productSearch.trim()
+                            ) {
+                              setShowProductDropdown(
+                                true
+                              );
+                            }
+                          }}
+                          placeholder="Search product name, SKU or category..."
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 pr-10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
 
-      {filteredProducts.map((product) => {
-        const selectedItem = items.find(
-          (item) => item.productId === product._id
-        );
+                        {/* Clear Search */}
+                        {productSearch && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProductSearch("");
+                              setShowProductDropdown(
+                                false
+                              );
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
 
-        const outOfStock =
-          product.stockQuantity <= 0;
+                      {/* Dropdown */}
+                      {showProductDropdown &&
+                        productSearch.trim() && (
+                          <div className="absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl">
+                            {filteredProducts.length >
+                            0 ? (
+                              <div className="max-h-72 overflow-y-auto">
+                                {filteredProducts.map(
+                                  (product) => {
+                                    const selectedItem =
+                                      items.find(
+                                        (item) =>
+                                          item.productId ===
+                                          product._id
+                                      );
 
-        return (
-          <option
-            key={product._id}
-            value={product._id}
-            disabled={outOfStock}
-          >
-            {product.name} | {product.sku} | ₹
-            {Number(product.sellingPrice).toFixed(2)} |
-            Stock: {product.stockQuantity}
-            {selectedItem
-              ? ` | Added: ${selectedItem.quantity}`
-              : ""}
-            {outOfStock ? " | Out of Stock" : ""}
-          </option>
-        );
-      })}
-    </select>
-  </div>
+                                    const outOfStock =
+                                      product.stockQuantity <=
+                                      0;
 
-  {/* Search Result Count */}
-  <div className="flex items-center justify-between text-sm">
-    <span className="text-gray-500 dark:text-gray-400">
-      {filteredProducts.length} product
-      {filteredProducts.length !== 1 ? "s" : ""} found
-    </span>
+                                    return (
+                                      <button
+                                        key={product._id}
+                                        type="button"
+                                        disabled={
+                                          outOfStock
+                                        }
+                                        onClick={() =>
+                                          handleProductSelect(
+                                            product
+                                          )
+                                        }
+                                        className={`w-full px-4 py-3 text-left border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition ${
+                                          outOfStock
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between gap-4">
+                                          {/* Product Info */}
+                                          <div className="min-w-0">
+                                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                                              {
+                                                product.name
+                                              }
+                                            </p>
 
-    {productSearch && (
-      <button
-        type="button"
-        onClick={() => setProductSearch("")}
-        className="text-blue-600 dark:text-blue-400 hover:underline"
-      >
-        Clear Search
-      </button>
-    )}
-  </div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                              SKU:{" "}
+                                              {
+                                                product.sku
+                                              }
+                                            </p>
 
-  {/* No Results */}
-  {productSearch && filteredProducts.length === 0 && (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-5 text-center">
-      <p className="text-gray-500 dark:text-gray-400">
-        No products found for "{productSearch}"
-      </p>
-    </div>
-  )}
-</div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                              Category:{" "}
+                                              {
+                                                product.category
+                                              }
+                                            </p>
+                                          </div>
 
+                                          {/* Price / Stock */}
+                                          <div className="text-right shrink-0">
+                                            <p className="font-semibold text-gray-900 dark:text-white">
+                                              ₹
+                                              {Number(
+                                                product.sellingPrice
+                                              ).toFixed(
+                                                2
+                                              )}
+                                            </p>
 
+                                            <p
+                                              className={`text-sm ${
+                                                outOfStock
+                                                  ? "text-red-500"
+                                                  : "text-green-600 dark:text-green-400"
+                                              }`}
+                                            >
+                                              {outOfStock
+                                                ? "Out of Stock"
+                                                : `Stock: ${product.stockQuantity}`}
+                                            </p>
+
+                                            {selectedItem && (
+                                              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                Added:{" "}
+                                                {
+                                                  selectedItem.quantity
+                                                }
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </button>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            ) : (
+                              <div className="p-5 text-center">
+                                <p className="text-gray-500 dark:text-gray-400">
+                                  No products found for "
+                                  {productSearch}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Search Result Count */}
+                    {productSearch.trim() && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {filteredProducts.length}{" "}
+                          product
+                          {filteredProducts.length !==
+                          1
+                            ? "s"
+                            : ""}{" "}
+                          found
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductSearch("");
+                            setShowProductDropdown(
+                              false
+                            );
+                          }}
+                          className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Clear Search
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -527,7 +721,9 @@ const CreateBill = () => {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    decreaseQuantity(item.productId)
+                                    decreaseQuantity(
+                                      item.productId
+                                    )
                                   }
                                   className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                                 >
@@ -542,7 +738,7 @@ const CreateBill = () => {
                                   onChange={(e) =>
                                     updateQuantity(
                                       item.productId,
-                                      e.target.value,
+                                      e.target.value
                                     )
                                   }
                                   className="w-16 text-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-1.5 text-gray-900 dark:text-white"
@@ -551,7 +747,9 @@ const CreateBill = () => {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    increaseQuantity(item.productId)
+                                    increaseQuantity(
+                                      item.productId
+                                    )
                                   }
                                   className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                                 >
@@ -561,13 +759,21 @@ const CreateBill = () => {
                             </td>
 
                             <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">
-                              ₹{(item.price * item.quantity).toFixed(2)}
+                              ₹
+                              {(
+                                item.price *
+                                item.quantity
+                              ).toFixed(2)}
                             </td>
 
                             <td className="px-6 py-4">
                               <button
                                 type="button"
-                                onClick={() => removeItem(item.productId)}
+                                onClick={() =>
+                                  removeItem(
+                                    item.productId
+                                  )
+                                }
                                 className="text-red-600 hover:text-red-700 text-sm font-medium"
                               >
                                 Remove
@@ -586,21 +792,26 @@ const CreateBill = () => {
                         key={item.productId}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                       >
-                        <div className="flex justify-between">
-                          <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <div className="flex justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                               {item.name}
                             </h3>
 
-                            <p className="text-sm text-gray-500">
-                              ₹{item.price.toFixed(2)} / {item.unit}
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              ₹{item.price.toFixed(2)} /{" "}
+                              {item.unit}
                             </p>
                           </div>
 
                           <button
                             type="button"
-                            onClick={() => removeItem(item.productId)}
-                            className="text-red-600 text-sm"
+                            onClick={() =>
+                              removeItem(
+                                item.productId
+                              )
+                            }
+                            className="text-red-600 text-sm shrink-0"
                           >
                             Remove
                           </button>
@@ -610,27 +821,39 @@ const CreateBill = () => {
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => decreaseQuantity(item.productId)}
-                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800"
+                              onClick={() =>
+                                decreaseQuantity(
+                                  item.productId
+                                )
+                              }
+                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                             >
                               -
                             </button>
 
-                            <span className="w-8 text-center font-medium dark:text-white">
+                            <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
                               {item.quantity}
                             </span>
 
                             <button
                               type="button"
-                              onClick={() => increaseQuantity(item.productId)}
-                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800"
+                              onClick={() =>
+                                increaseQuantity(
+                                  item.productId
+                                )
+                              }
+                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                             >
                               +
                             </button>
                           </div>
 
                           <span className="font-semibold text-gray-900 dark:text-white">
-                            ₹{(item.price * item.quantity).toFixed(2)}
+                            ₹
+                            {(
+                              item.price *
+                              item.quantity
+                            ).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -641,7 +864,7 @@ const CreateBill = () => {
             </div>
           </div>
 
-          {/* Right side - Summary */}
+          {/* RIGHT SIDE - SUMMARY */}
           <div className="xl:col-span-1">
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 sticky top-6">
               <div className="p-6 border-b border-gray-200 dark:border-gray-800">
@@ -689,15 +912,18 @@ const CreateBill = () => {
                       min="0"
                       step="0.01"
                       value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
+                      onChange={(e) =>
+                        setDiscount(e.target.value)
+                      }
                       placeholder="0.00"
                       className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-4 py-3 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>
 
+                {/* Grand Total */}
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3">
                     <span className="text-lg font-semibold text-gray-900 dark:text-white">
                       Grand Total
                     </span>
@@ -716,7 +942,9 @@ const CreateBill = () => {
 
                   <select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    onChange={(e) =>
+                      setPaymentMethod(e.target.value)
+                    }
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white"
                   >
                     <option value="cash">Cash</option>
@@ -728,12 +956,17 @@ const CreateBill = () => {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={saving || items.length === 0}
+                  disabled={
+                    saving || items.length === 0
+                  }
                   className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
                 >
-                  {saving ? "Creating Bill..." : "Create Bill"}
+                  {saving
+                    ? "Creating Bill..."
+                    : "Create Bill"}
                 </button>
 
+                {/* Cancel */}
                 <button
                   type="button"
                   onClick={() => navigate("/dashboard")}
@@ -752,3 +985,4 @@ const CreateBill = () => {
 };
 
 export default CreateBill;
+
