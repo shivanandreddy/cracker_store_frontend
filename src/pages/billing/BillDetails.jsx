@@ -53,7 +53,7 @@ Time      :    ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
 Customer  :    ${bill.customerName || "Walk-in Customer"}
 Phone     :   ${bill.customerPhone || "-"}
 --------------------------------
-ITEM NAME        QTY   TOTAL (₹)
+ITEM NAME         QTY  TOTAL (₹)
 --------------------------------
 ${bill.items
   .map(
