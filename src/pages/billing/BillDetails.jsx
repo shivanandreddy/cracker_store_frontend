@@ -57,7 +57,7 @@ ITEM NAME    QTY    TOTAL (₹)
 ${bill.items
   .map(
     (item) =>
-      `${item.name.padEnd(24, " ")} ${String(item.quantity).padStart(3, " ")}   ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
+      `${item.name.padEnd(16, " ")} ${String(item.quantity).padStart(3, " ")}   ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
   .trim()
   )
   .join("\n")}
