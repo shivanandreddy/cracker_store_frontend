@@ -47,10 +47,10 @@ const BillDetails = () => {
                  KanakaDurga Fireworks           
                      INVOICE             
 ================================
-Invoice  :    ${bill.billNumber}
-Date     :    ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-Customer :    ${bill.customerName || "Walk-in Customer"}
-Phone    :   ${bill.customerPhone || "-"}
+Invoice     :    ${bill.billNumber}
+Date        :    ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+Customer    :    ${bill.customerName || "Walk-in Customer"}
+Phone       :   ${bill.customerPhone || "-"}
 ------------------------------------
 ITEM DESCRIPTION         QTY    TOTAL (₹)
 ------------------------------------
