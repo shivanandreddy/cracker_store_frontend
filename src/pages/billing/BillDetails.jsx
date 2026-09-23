@@ -51,9 +51,9 @@ Invoice   :    ${bill.billNumber}
 Date      :    ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
 Customer  :    ${bill.customerName || "Walk-in Customer"}
 Phone     :   ${bill.customerPhone || "-"}
-----------------------
+----------------------------
 ITEM NAME    QTY    TOTAL (₹)
-----------------------
+----------------------------
 ${bill.items
   .map(
     (item) =>
