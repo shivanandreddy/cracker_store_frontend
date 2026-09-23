@@ -44,8 +44,8 @@ const BillDetails = () => {
     const message = 
 `\`\`\`
 ================================
-        KanakaDurga Fireworks           
-            INVOICE             
+    KanakaDurga Fireworks           
+        INVOICE             
 ================================
 Invoice   :    ${bill.billNumber}
 Date      :    ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
