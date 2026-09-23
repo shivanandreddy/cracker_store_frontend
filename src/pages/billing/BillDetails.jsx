@@ -43,17 +43,17 @@ const BillDetails = () => {
     // Formatted text invoice template for WhatsApp
     const message = 
 `\`\`\`
-========================================
+====================================
         KanakaDurga Fireworks           
-                INVOICE             
-========================================
-Invoice #   : ${bill.billNumber}
-Date        : ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-Customer    : ${bill.customerName || "Walk-in Customer"}
-Phone       : ${bill.customerPhone || "-"}
-----------------------------------------
+            INVOICE             
+====================================
+Invoice  : ${bill.billNumber}
+Date     : ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+Customer : ${bill.customerName || "Walk-in Customer"}
+Phone    : ${bill.customerPhone || "-"}
+------------------------------------
 ITEM DESCRIPTION         QTY    TOTAL (₹)
-----------------------------------------
+------------------------------------
 ${bill.items
   .map(
     (item) =>
@@ -61,16 +61,16 @@ ${bill.items
   .trim()
   )
   .join("\n")}
-----------------------------------------
+-------------------------------------
 Subtotal                   : ₹${Number(bill.subtotal).toFixed(2)}
 Discount                   : -₹${Number(bill.discount || 0).toFixed(2)}
 GRAND TOTAL                : ₹${Number(bill.grandTotal).toFixed(2)}
-----------------------------------------
+-------------------------------------
 Payment Mode: ${bill.paymentMethod.toUpperCase()}
-========================================
-       Thank you for your visit!        
-         Please Visit Again             
-========================================
+=====================================
+        Thank you for your visit!        
+            Please Visit Again             
+=====================================
 \`\`\``;
 
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(
