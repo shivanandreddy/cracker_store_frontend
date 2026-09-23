@@ -43,10 +43,10 @@ const BillDetails = () => {
     // Formatted text invoice template for WhatsApp
     const message = 
 `\`\`\`
-====================================
+================================
                  KanakaDurga Fireworks           
                      INVOICE             
-====================================
+================================
 Invoice  :    ${bill.billNumber}
 Date     :    ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
 Customer :    ${bill.customerName || "Walk-in Customer"}
