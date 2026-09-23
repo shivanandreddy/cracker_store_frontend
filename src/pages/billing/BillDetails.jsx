@@ -48,7 +48,7 @@ const BillDetails = () => {
         INVOICE             
 ================================
 Invoice   :    ${bill.billNumber}
-Date      :    ${new Date(bill.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+Date      :    ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
 Customer  :    ${bill.customerName || "Walk-in Customer"}
 Phone     :   ${bill.customerPhone || "-"}
 ----------------------
