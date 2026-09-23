@@ -62,9 +62,9 @@ ${bill.items
   )
   .join("\n")}
 --------------------------------
-Subtotal                   : ₹${Number(bill.subtotal).toFixed(2)}
-Discount                   : -₹${Number(bill.discount || 0).toFixed(2)}
-GRAND TOTAL                : ₹${Number(bill.grandTotal).toFixed(2)}
+Subtotal             : ₹${Number(bill.subtotal).toFixed(2)}
+Discount             : -₹${Number(bill.discount || 0).toFixed(2)}
+GRAND TOTAL          : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
 Payment Mode: ${bill.paymentMethod.toUpperCase()}
 ================================
