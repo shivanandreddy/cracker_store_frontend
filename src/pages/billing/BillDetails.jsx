@@ -44,7 +44,7 @@ const BillDetails = () => {
     const message = 
 `\`\`\`
 ================================
-    KanakaDurga Fireworks           
+      KanakaDurga Fireworks           
         INVOICE             
 ================================
 Invoice   :    ${bill.billNumber}
@@ -52,9 +52,9 @@ Date      :    ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\
 Time      :    ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
 Customer  :    ${bill.customerName || "Walk-in Customer"}
 Phone     :   ${bill.customerPhone || "-"}
--------------------------------
+--------------------------------
 ITEM NAME    QTY    TOTAL (₹)
--------------------------------
+--------------------------------
 ${bill.items
   .map(
     (item) =>
