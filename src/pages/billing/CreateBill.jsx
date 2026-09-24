@@ -23,8 +23,6 @@ const CreateBill = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Discount modal
-  const [showDiscountModal, setShowDiscountModal] = useState(false);
 
   // Product search
   const [productSearch, setProductSearch] = useState("");
@@ -299,34 +297,27 @@ const CreateBill = () => {
   // --------------------------------------------------
   // Open Discount Modal
   // --------------------------------------------------
-  const handleCreateBillClick = () => {
-    setError("");
-    setSuccess("");
+const handleCreateBillClick = () => {
+  setError("");
+  setSuccess("");
 
-    if (items.length === 0) {
-      setError(
-        "Please add at least one product."
-      );
+  if (items.length === 0) {
+    setError("Please add at least one product.");
+    return;
+  }
 
-      return;
-    }
+  if (
+    customerPhone &&
+    !/^\d{10}$/.test(customerPhone)
+  ) {
+    setError(
+      "Customer phone number must contain exactly 10 digits."
+    );
+    return;
+  }
 
-    if (
-      customerPhone &&
-      !/^\d{10}$/.test(customerPhone)
-    ) {
-      setError(
-        "Customer phone number must contain exactly 10 digits."
-      );
-
-      return;
-    }
-
-    // Start with 0% every time
-    setDiscountPercent(0);
-
-    setShowDiscountModal(true);
-  };
+  handleSubmit();
+};
 
   // --------------------------------------------------
   // Discount Percentage Change
@@ -356,110 +347,98 @@ const CreateBill = () => {
   // Create Bill
   // --------------------------------------------------
   const handleSubmit = async () => {
-    setError("");
-    setSuccess("");
+  setError("");
+  setSuccess("");
 
-    const finalDiscountPercent =
-      Number(discountPercent) || 0;
+  const finalDiscountPercent =
+    Number(discountPercent) || 0;
 
-    if (
-      finalDiscountPercent < 0 ||
-      finalDiscountPercent > 50
-    ) {
-      setError(
-        "Discount percentage must be between 0% and 50%."
-      );
+  if (
+    finalDiscountPercent < 0 ||
+    finalDiscountPercent > 50
+  ) {
+    setError(
+      "Discount percentage must be between 0% and 50%."
+    );
+    return;
+  }
 
-      return;
-    }
+  if (items.length === 0) {
+    setError("Please add at least one product.");
+    return;
+  }
 
-    if (items.length === 0) {
-      setError(
-        "Please add at least one product."
-      );
+  try {
+    setSaving(true);
 
-      setShowDiscountModal(false);
+    const finalDiscountAmount = Number(
+      (
+        (subtotal * finalDiscountPercent) /
+        100
+      ).toFixed(2)
+    );
 
-      return;
-    }
+    const payload = {
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
 
-    try {
-      setSaving(true);
+      items: items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
 
-      const finalDiscountAmount = Number(
-        (
-          (subtotal * finalDiscountPercent) /
-          100
-        ).toFixed(2)
-      );
+      discount: finalDiscountAmount,
 
-      const payload = {
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+      paymentMethod,
+    };
 
-        items: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })),
+    const response = await api.post(
+      "/bills",
+      payload
+    );
 
-        // Send calculated discount amount
-        discount: finalDiscountAmount,
+    setSuccess("Bill created successfully.");
 
-        paymentMethod,
-      };
+    const billId = response.data.bill?._id;
 
-      const response = await api.post(
-        "/bills",
-        payload
-      );
+    setTimeout(() => {
+      if (billId) {
+        navigate(`/billing/${billId}`);
+      } else {
+        navigate("/billing");
+      }
+    }, 800);
+  } catch (error) {
+    console.error(
+      "Create Bill Error:",
+      error
+    );
 
-      setShowDiscountModal(false);
-
-      setSuccess(
-        "Bill created successfully."
-      );
-
-      const billId =
-        response.data.bill?._id;
-
-      setTimeout(() => {
-        if (billId) {
-          navigate(`/billing/${billId}`);
-        } else {
-          navigate("/billing");
-        }
-      }, 800);
-    } catch (error) {
-      console.error(
-        "Create Bill Error:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Failed to create bill."
-      );
-
-      setShowDiscountModal(false);
-    } finally {
-      setSaving(false);
-    }
-  };
+    setError(
+      error.response?.data?.message ||
+        "Failed to create bill."
+    );
+  } finally {
+    setSaving(false);
+  }
+};
 
   // --------------------------------------------------
   // Discount Options
   // --------------------------------------------------
   const discountOptions = [
-    0,
-    5,
-    10,
-    15,
-    20,
-    25,
-    30,
-    40,
-    50,
-  ];
+  0,
+  5,
+  10,
+  15,
+  20,
+  25,
+  30,
+  35,
+  40,
+  45,
+  50,
+];
 
   return (
     <div className="space-y-6">
@@ -1042,15 +1021,52 @@ const CreateBill = () => {
                 </div>
 
                 {/* Discount */}
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Discount
-                  </span>
+<div>
+  <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+    Discount
+  </label>
 
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {Number(discountPercent) || 0}%
-                  </span>
-                </div>
+  <select
+    value={Number(discountPercent) || 0}
+    onChange={(e) =>
+      setDiscountPercent(Number(e.target.value))
+    }
+    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    {discountOptions.map((percentage) => (
+      <option
+        key={percentage}
+        value={percentage}
+      >
+        {percentage}%
+      </option>
+    ))}
+  </select>
+</div>
+
+{/* Discount Details */}
+<div className="space-y-3">
+  <div className="flex justify-between">
+    <span className="text-gray-600 dark:text-gray-400">
+      Discount %
+    </span>
+
+    <span className="font-medium text-gray-900 dark:text-white">
+      {Number(discountPercent) || 0}%
+    </span>
+  </div>
+
+  <div className="flex justify-between">
+    <span className="text-gray-600 dark:text-gray-400">
+      Discount Amount
+    </span>
+
+    <span className="font-medium text-red-600 dark:text-red-400">
+      - ₹{discountAmount.toFixed(2)}
+    </span>
+  </div>
+</div>
+
 
                 {/* Grand Total */}
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-5">
@@ -1129,164 +1145,7 @@ const CreateBill = () => {
       {/* ==================================================
           DISCOUNT MODAL
       ================================================== */}
-      {showDiscountModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    Apply Discount
-                  </h2>
-
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Select a discount between 0% and
-                    50%.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowDiscountModal(false)
-                  }
-                  disabled={saving}
-                  className="w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-6">
-              {/* Quick Discount Buttons */}
-              <div>
-                <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Select Discount
-                </label>
-
-                <div className="grid grid-cols-3 gap-3">
-                  {discountOptions.map(
-                    (percentage) => (
-                      <button
-                        key={percentage}
-                        type="button"
-                        onClick={() =>
-                          setDiscountPercent(
-                            percentage
-                          )
-                        }
-                        className={`py-3 rounded-lg border font-semibold transition ${
-                          Number(
-                            discountPercent
-                          ) === percentage
-                            ? "border-blue-600 bg-blue-600 text-white"
-                            : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        }`}
-                      >
-                        {percentage}%
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Custom Percentage */}
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Discount Percentage
-                </label>
-
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    max="50"
-                    step="1"
-                    value={discountPercent}
-                    onChange={(e) =>
-                      handleDiscountChange(
-                        e.target.value
-                      )
-                    }
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 pr-12 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-gray-500 dark:text-gray-400">
-                    %
-                  </span>
-                </div>
-
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Maximum discount allowed: 50%
-                </p>
-              </div>
-
-              {/* Calculation */}
-              <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Subtotal
-                  </span>
-
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    ₹{subtotal.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">
-                    Discount (
-                    {Number(discountPercent) || 0}%)
-                  </span>
-
-                  <span className="font-medium text-red-600 dark:text-red-400">
-                    - ₹
-                    {discountAmount.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    Grand Total
-                  </span>
-
-                  <span className="text-xl font-bold text-blue-600">
-                    ₹{grandTotal.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowDiscountModal(false)
-                  }
-                  disabled={saving}
-                  className="flex-1 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={saving}
-                  className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving
-                    ? "Creating..."
-                    : "Confirm & Create"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };
