@@ -426,19 +426,6 @@ const handleCreateBillClick = () => {
   // --------------------------------------------------
   // Discount Options
   // --------------------------------------------------
-  const discountOptions = [
-  0,
-  5,
-  10,
-  15,
-  20,
-  25,
-  30,
-  35,
-  40,
-  45,
-  50,
-];
 
   return (
     <div className="space-y-6">
@@ -1021,28 +1008,36 @@ const handleCreateBillClick = () => {
                 </div>
 
                 {/* Discount */}
+{/* Discount Percentage */}
 <div>
   <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-    Discount
+    Discount Percentage
   </label>
 
-  <select
-    value={Number(discountPercent) || 0}
-    onChange={(e) =>
-      setDiscountPercent(Number(e.target.value))
-    }
-    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    {discountOptions.map((percentage) => (
-      <option
-        key={percentage}
-        value={percentage}
-      >
-        {percentage}%
-      </option>
-    ))}
-  </select>
+  <div className="relative">
+    <input
+      type="number"
+      min="0"
+      max="50"
+      step="1"
+      value={discountPercent}
+      onChange={(e) =>
+        handleDiscountChange(e.target.value)
+      }
+      placeholder="Enter 0 to 50"
+      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 pr-12 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+
+    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-gray-500 dark:text-gray-400">
+      %
+    </span>
+  </div>
+
+  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+    Enter a discount between 0% and 50%.
+  </p>
 </div>
+
 
 {/* Discount Details */}
 <div className="space-y-3">
