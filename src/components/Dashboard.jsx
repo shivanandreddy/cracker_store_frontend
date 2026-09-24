@@ -129,6 +129,32 @@ bills.forEach((bill) => {
     fetchBillingSummary();
   }, [user]);
 
+  const grandTotals = {
+  totalBills: billingSummary.reduce(
+    (total, item) => total + (Number(item.totalBills) || 0),
+    0
+  ),
+
+  creditBills: billingSummary.reduce(
+    (total, item) => total + (Number(item.creditBills) || 0),
+    0
+  ),
+
+  totalAmount: billingSummary.reduce(
+    (total, item) => total + (Number(item.totalAmount) || 0),
+    0
+  ),
+
+  creditAmount: billingSummary.reduce(
+    (total, item) => total + (Number(item.creditAmount) || 0),
+    0
+  ),
+};
+
+grandTotals.receivedAmount =
+  grandTotals.totalAmount - grandTotals.creditAmount;
+
+
   return (
     <div className="min-h-full">
       {/* Header */}
@@ -138,7 +164,7 @@ bills.forEach((bill) => {
         </h1>
 
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Welcome, {user?.name}
+          Welcome, <span className="text-green-600 dark:text-green-400 capitalize">{user?.name}</span>
         </p>
       </div>
 
@@ -312,6 +338,57 @@ bills.forEach((bill) => {
                         )
                       )}
                     </tbody>
+                    <tfoot>
+  <tr className="bg-gray-100 dark:bg-gray-800 border-t-2 border-gray-300 dark:border-gray-700">
+
+    {/* # */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4"></td>
+
+    {/* GRAND TOTAL LABEL */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white">
+        GRAND TOTAL
+      </span>
+    </td>
+
+    {/* TOTAL BILLS */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="inline-flex items-center justify-center min-w-[30px] px-2 py-1 rounded-full text-xs sm:text-sm font-bold bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+        {grandTotals.totalBills}
+      </span>
+    </td>
+
+    {/* TOTAL CREDIT BILLS */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="inline-flex items-center justify-center min-w-[30px] px-2 py-1 rounded-full text-xs sm:text-sm font-bold bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300">
+        {grandTotals.creditBills}
+      </span>
+    </td>
+
+    {/* GRAND TOTAL AMOUNT */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="font-bold text-sm sm:text-base text-blue-600 dark:text-blue-400">
+        ₹{grandTotals.totalAmount.toLocaleString("en-IN")}
+      </span>
+    </td>
+
+    {/* GRAND CREDIT AMOUNT */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="font-bold text-sm sm:text-base text-red-600 dark:text-red-400">
+        ₹{grandTotals.creditAmount.toLocaleString("en-IN")}
+      </span>
+    </td>
+
+    {/* GRAND RECEIVED AMOUNT */}
+    <td className="px-2 py-3 sm:px-4 sm:py-4">
+      <span className="font-bold text-sm sm:text-base text-green-600 dark:text-green-400">
+        ₹{grandTotals.receivedAmount.toLocaleString("en-IN")}
+      </span>
+    </td>
+
+  </tr>
+</tfoot>
+
                   </table>
                 </div>
               </div>
