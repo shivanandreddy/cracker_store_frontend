@@ -12,7 +12,9 @@ const CreateBill = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
 
-  const [discount, setDiscount] = useState("");
+  // Discount percentage
+  const [discountPercent, setDiscountPercent] = useState(0);
+
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -21,14 +23,18 @@ const CreateBill = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // Discount modal
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+
   // Product search
   const [productSearch, setProductSearch] = useState("");
-  const [showProductDropdown, setShowProductDropdown] =
-    useState(false);
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
 
   const productSearchRef = useRef(null);
 
-  // Fetch products
+  // --------------------------------------------------
+  // Fetch Products
+  // --------------------------------------------------
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -53,7 +59,9 @@ const CreateBill = () => {
     fetchProducts();
   }, []);
 
-  // Add product to bill
+  // --------------------------------------------------
+  // Add Product
+  // --------------------------------------------------
   const addProduct = (product) => {
     setError("");
 
@@ -99,7 +107,9 @@ const CreateBill = () => {
     ]);
   };
 
-  // Update quantity
+  // --------------------------------------------------
+  // Update Quantity
+  // --------------------------------------------------
   const updateQuantity = (productId, quantity) => {
     const product = products.find(
       (item) => item._id === productId
@@ -136,7 +146,9 @@ const CreateBill = () => {
     );
   };
 
-  // Increase quantity
+  // --------------------------------------------------
+  // Increase Quantity
+  // --------------------------------------------------
   const increaseQuantity = (productId) => {
     const item = items.find(
       (item) => item.productId === productId
@@ -144,10 +156,15 @@ const CreateBill = () => {
 
     if (!item) return;
 
-    updateQuantity(productId, item.quantity + 1);
+    updateQuantity(
+      productId,
+      item.quantity + 1
+    );
   };
 
-  // Decrease quantity
+  // --------------------------------------------------
+  // Decrease Quantity
+  // --------------------------------------------------
   const decreaseQuantity = (productId) => {
     const item = items.find(
       (item) => item.productId === productId
@@ -160,10 +177,15 @@ const CreateBill = () => {
       return;
     }
 
-    updateQuantity(productId, item.quantity - 1);
+    updateQuantity(
+      productId,
+      item.quantity - 1
+    );
   };
 
-  // Remove item
+  // --------------------------------------------------
+  // Remove Item
+  // --------------------------------------------------
   const removeItem = (productId) => {
     setItems((previous) =>
       previous.filter(
@@ -174,7 +196,9 @@ const CreateBill = () => {
     setError("");
   };
 
-  // Calculate subtotal
+  // --------------------------------------------------
+  // Subtotal
+  // --------------------------------------------------
   const subtotal = useMemo(() => {
     return items.reduce(
       (total, item) =>
@@ -183,22 +207,33 @@ const CreateBill = () => {
     );
   }, [items]);
 
-  // Calculate discount
-  const discountAmount = Math.min(
-    Math.max(Number(discount) || 0, 0),
-    subtotal
-  );
+  // --------------------------------------------------
+  // Discount Amount
+  // --------------------------------------------------
+  const discountAmount = useMemo(() => {
+    return Number(
+      ((subtotal * Number(discountPercent)) / 100).toFixed(2)
+    );
+  }, [subtotal, discountPercent]);
 
-  // Calculate grand total
-  const grandTotal = subtotal - discountAmount;
+  // --------------------------------------------------
+  // Grand Total
+  // --------------------------------------------------
+  const grandTotal = useMemo(() => {
+    return subtotal - discountAmount;
+  }, [subtotal, discountAmount]);
 
-  // Total quantity
+  // --------------------------------------------------
+  // Total Quantity
+  // --------------------------------------------------
   const totalQuantity = items.reduce(
     (total, item) => total + item.quantity,
     0
   );
 
-  // Product Search Logic
+  // --------------------------------------------------
+  // Product Search
+  // --------------------------------------------------
   const filteredProducts = useMemo(() => {
     const search = productSearch
       .toLowerCase()
@@ -223,7 +258,9 @@ const CreateBill = () => {
     });
   }, [products, productSearch]);
 
-  // Select product from dropdown
+  // --------------------------------------------------
+  // Select Product
+  // --------------------------------------------------
   const handleProductSelect = (product) => {
     if (!product) return;
 
@@ -233,7 +270,9 @@ const CreateBill = () => {
     setShowProductDropdown(false);
   };
 
-  // Close dropdown when clicking outside
+  // --------------------------------------------------
+  // Close Dropdown
+  // --------------------------------------------------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -257,15 +296,18 @@ const CreateBill = () => {
     };
   }, []);
 
-  // Create bill
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  // --------------------------------------------------
+  // Open Discount Modal
+  // --------------------------------------------------
+  const handleCreateBillClick = () => {
     setError("");
     setSuccess("");
 
     if (items.length === 0) {
-      setError("Please add at least one product.");
+      setError(
+        "Please add at least one product."
+      );
+
       return;
     }
 
@@ -280,21 +322,76 @@ const CreateBill = () => {
       return;
     }
 
-    if (Number(discount) < 0) {
-      setError("Discount cannot be negative.");
+    // Start with 0% every time
+    setDiscountPercent(0);
+
+    setShowDiscountModal(true);
+  };
+
+  // --------------------------------------------------
+  // Discount Percentage Change
+  // --------------------------------------------------
+  const handleDiscountChange = (value) => {
+    if (value === "") {
+      setDiscountPercent("");
       return;
     }
 
-    if (Number(discount) > subtotal) {
+    const number = Number(value);
+
+    if (number < 0) {
+      setDiscountPercent(0);
+      return;
+    }
+
+    if (number > 50) {
+      setDiscountPercent(50);
+      return;
+    }
+
+    setDiscountPercent(number);
+  };
+
+  // --------------------------------------------------
+  // Create Bill
+  // --------------------------------------------------
+  const handleSubmit = async () => {
+    setError("");
+    setSuccess("");
+
+    const finalDiscountPercent =
+      Number(discountPercent) || 0;
+
+    if (
+      finalDiscountPercent < 0 ||
+      finalDiscountPercent > 50
+    ) {
       setError(
-        "Discount cannot be greater than the subtotal."
+        "Discount percentage must be between 0% and 50%."
       );
+
+      return;
+    }
+
+    if (items.length === 0) {
+      setError(
+        "Please add at least one product."
+      );
+
+      setShowDiscountModal(false);
 
       return;
     }
 
     try {
       setSaving(true);
+
+      const finalDiscountAmount = Number(
+        (
+          (subtotal * finalDiscountPercent) /
+          100
+        ).toFixed(2)
+      );
 
       const payload = {
         customerName: customerName.trim(),
@@ -305,7 +402,9 @@ const CreateBill = () => {
           quantity: item.quantity,
         })),
 
-        discount: discountAmount,
+        // Send calculated discount amount
+        discount: finalDiscountAmount,
+
         paymentMethod,
       };
 
@@ -314,9 +413,14 @@ const CreateBill = () => {
         payload
       );
 
-      setSuccess("Bill created successfully.");
+      setShowDiscountModal(false);
 
-      const billId = response.data.bill?._id;
+      setSuccess(
+        "Bill created successfully."
+      );
+
+      const billId =
+        response.data.bill?._id;
 
       setTimeout(() => {
         if (billId) {
@@ -326,16 +430,36 @@ const CreateBill = () => {
         }
       }, 800);
     } catch (error) {
-      console.error("Create Bill Error:", error);
+      console.error(
+        "Create Bill Error:",
+        error
+      );
 
       setError(
         error.response?.data?.message ||
           "Failed to create bill."
       );
+
+      setShowDiscountModal(false);
     } finally {
       setSaving(false);
     }
   };
+
+  // --------------------------------------------------
+  // Discount Options
+  // --------------------------------------------------
+  const discountOptions = [
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    40,
+    50,
+  ];
 
   return (
     <div className="space-y-6">
@@ -365,7 +489,12 @@ const CreateBill = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleCreateBillClick();
+        }}
+      >
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* LEFT SIDE */}
           <div className="xl:col-span-2 space-y-6">
@@ -392,7 +521,9 @@ const CreateBill = () => {
                     type="text"
                     value={customerName}
                     onChange={(e) =>
-                      setCustomerName(e.target.value)
+                      setCustomerName(
+                        e.target.value
+                      )
                     }
                     placeholder="Enter customer name"
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -484,7 +615,10 @@ const CreateBill = () => {
                             setProductSearch(
                               e.target.value
                             );
-                            setShowProductDropdown(true);
+
+                            setShowProductDropdown(
+                              true
+                            );
                           }}
                           onFocus={() => {
                             if (
@@ -499,7 +633,6 @@ const CreateBill = () => {
                           className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 pr-10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
 
-                        {/* Clear Search */}
                         {productSearch && (
                           <button
                             type="button"
@@ -538,7 +671,9 @@ const CreateBill = () => {
 
                                     return (
                                       <button
-                                        key={product._id}
+                                        key={
+                                          product._id
+                                        }
                                         type="button"
                                         disabled={
                                           outOfStock
@@ -555,7 +690,6 @@ const CreateBill = () => {
                                         }`}
                                       >
                                         <div className="flex items-center justify-between gap-4">
-                                          {/* Product Info */}
                                           <div className="min-w-0">
                                             <p className="font-medium text-gray-900 dark:text-white truncate">
                                               {
@@ -578,7 +712,6 @@ const CreateBill = () => {
                                             </p>
                                           </div>
 
-                                          {/* Price / Stock */}
                                           <div className="text-right shrink-0">
                                             <p className="font-semibold text-gray-900 dark:text-white">
                                               ₹
@@ -701,7 +834,9 @@ const CreateBill = () => {
 
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                         {items.map((item) => (
-                          <tr key={item.productId}>
+                          <tr
+                            key={item.productId}
+                          >
                             <td className="px-6 py-4">
                               <p className="font-medium text-gray-900 dark:text-white">
                                 {item.name}
@@ -713,7 +848,10 @@ const CreateBill = () => {
                             </td>
 
                             <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                              ₹{item.price.toFixed(2)}
+                              ₹
+                              {item.price.toFixed(
+                                2
+                              )}
                             </td>
 
                             <td className="px-6 py-4">
@@ -733,8 +871,12 @@ const CreateBill = () => {
                                 <input
                                   type="number"
                                   min="1"
-                                  max={item.stockQuantity}
-                                  value={item.quantity}
+                                  max={
+                                    item.stockQuantity
+                                  }
+                                  value={
+                                    item.quantity
+                                  }
                                   onChange={(e) =>
                                     updateQuantity(
                                       item.productId,
@@ -799,8 +941,11 @@ const CreateBill = () => {
                             </h3>
 
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              ₹{item.price.toFixed(2)} /{" "}
-                              {item.unit}
+                              ₹
+                              {item.price.toFixed(
+                                2
+                              )}{" "}
+                              / {item.unit}
                             </p>
                           </div>
 
@@ -897,28 +1042,14 @@ const CreateBill = () => {
                 </div>
 
                 {/* Discount */}
-                <div>
-                  <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">
                     Discount
-                  </label>
+                  </span>
 
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                      ₹
-                    </span>
-
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={discount}
-                      onChange={(e) =>
-                        setDiscount(e.target.value)
-                      }
-                      placeholder="0.00"
-                      className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 pl-9 pr-4 py-3 text-gray-900 dark:text-white"
-                    />
-                  </div>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {Number(discountPercent) || 0}%
+                  </span>
                 </div>
 
                 {/* Grand Total */}
@@ -943,14 +1074,27 @@ const CreateBill = () => {
                   <select
                     value={paymentMethod}
                     onChange={(e) =>
-                      setPaymentMethod(e.target.value)
+                      setPaymentMethod(
+                        e.target.value
+                      )
                     }
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-900 dark:text-white"
                   >
-                    <option value="cash">Cash</option>
-                    <option value="upi">UPI</option>
-                    <option value="card">Card</option>
-                    <option value="credit">Credit</option>
+                    <option value="cash">
+                      Cash
+                    </option>
+
+                    <option value="upi">
+                      UPI
+                    </option>
+
+                    <option value="card">
+                      Card
+                    </option>
+
+                    <option value="credit">
+                      Credit
+                    </option>
                   </select>
                 </div>
 
@@ -962,15 +1106,15 @@ const CreateBill = () => {
                   }
                   className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:bg-gray-300 disabled:cursor-not-allowed dark:disabled:bg-gray-700"
                 >
-                  {saving
-                    ? "Creating Bill..."
-                    : "Create Bill"}
+                  Create Bill
                 </button>
 
                 {/* Cancel */}
                 <button
                   type="button"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() =>
+                    navigate("/dashboard")
+                  }
                   disabled={saving}
                   className="w-full py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                 >
@@ -981,6 +1125,168 @@ const CreateBill = () => {
           </div>
         </div>
       </form>
+
+      {/* ==================================================
+          DISCOUNT MODAL
+      ================================================== */}
+      {showDiscountModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Apply Discount
+                  </h2>
+
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    Select a discount between 0% and
+                    50%.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowDiscountModal(false)
+                  }
+                  disabled={saving}
+                  className="w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 dark:text-gray-400"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Quick Discount Buttons */}
+              <div>
+                <label className="block mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Select Discount
+                </label>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {discountOptions.map(
+                    (percentage) => (
+                      <button
+                        key={percentage}
+                        type="button"
+                        onClick={() =>
+                          setDiscountPercent(
+                            percentage
+                          )
+                        }
+                        className={`py-3 rounded-lg border font-semibold transition ${
+                          Number(
+                            discountPercent
+                          ) === percentage
+                            ? "border-blue-600 bg-blue-600 text-white"
+                            : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        }`}
+                      >
+                        {percentage}%
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Custom Percentage */}
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Discount Percentage
+                </label>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={discountPercent}
+                    onChange={(e) =>
+                      handleDiscountChange(
+                        e.target.value
+                      )
+                    }
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 pr-12 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-semibold text-gray-500 dark:text-gray-400">
+                    %
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Maximum discount allowed: 50%
+                </p>
+              </div>
+
+              {/* Calculation */}
+              <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Subtotal
+                  </span>
+
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    ₹{subtotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">
+                    Discount (
+                    {Number(discountPercent) || 0}%)
+                  </span>
+
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    - ₹
+                    {discountAmount.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between">
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    Grand Total
+                  </span>
+
+                  <span className="text-xl font-bold text-blue-600">
+                    ₹{grandTotal.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Modal Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowDiscountModal(false)
+                  }
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving
+                    ? "Creating..."
+                    : "Confirm & Create"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

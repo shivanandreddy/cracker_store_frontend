@@ -1,13 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import BillDetailsModal from "./BillDetailsModal"; // Make sure the path matches where you saved the modal component
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Modal State
+  const [selectedBillId, setSelectedBillId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -19,14 +22,12 @@ const BillList = () => {
       setError("");
 
       const response = await api.get("/bills");
-
       setBills(response.data.bills || []);
 
       // Reset to first page after fetching
       setCurrentPage(1);
     } catch (error) {
       console.error("Fetch Bills Error:", error);
-
       setError(
         error.response?.data?.message ||
           "Failed to load bill history."
@@ -40,10 +41,15 @@ const BillList = () => {
     fetchBills();
   }, []);
 
+  // Open modal handler
+  const handleOpenModal = (billId) => {
+    setSelectedBillId(billId);
+    setIsModalOpen(true);
+  };
+
   // Format date
   const formatDate = (date) => {
     if (!date) return "-";
-
     return new Date(date).toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
@@ -53,38 +59,21 @@ const BillList = () => {
   // Format payment method
   const formatPaymentMethod = (method) => {
     if (!method) return "-";
-
-    return (
-      method.charAt(0).toUpperCase() +
-      method.slice(1)
-    );
+    return method.charAt(0).toUpperCase() + method.slice(1);
   };
 
   // Total number of pages
-  const totalPages = Math.ceil(
-    bills.length / billsPerPage
-  );
+  const totalPages = Math.ceil(bills.length / billsPerPage);
 
   // Calculate current page bills
-  const startIndex =
-    (currentPage - 1) * billsPerPage;
-
-  const endIndex =
-    startIndex + billsPerPage;
-
-  const currentBills = bills.slice(
-    startIndex,
-    endIndex
-  );
+  const startIndex = (currentPage - 1) * billsPerPage;
+  const endIndex = startIndex + billsPerPage;
+  const currentBills = bills.slice(startIndex, endIndex);
 
   // Go to page
   const goToPage = (page) => {
-    if (
-      page >= 1 &&
-      page <= totalPages
-    ) {
+    if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-
       window.scrollTo({
         top: 0,
         behavior: "smooth",
@@ -111,7 +100,6 @@ const BillList = () => {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Bill History
           </h1>
-
           <p className="mt-1 text-gray-500 dark:text-gray-400">
             View all customer invoices and transactions.
           </p>
@@ -129,7 +117,6 @@ const BillList = () => {
       {error && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
           <span>{error}</span>
-
           <button
             type="button"
             onClick={fetchBills}
@@ -147,7 +134,6 @@ const BillList = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Total Bills
           </p>
-
           <p className="mt-1 text-3xl font-bold text-gray-900 dark:text-white">
             {bills.length}
           </p>
@@ -158,16 +144,12 @@ const BillList = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Total Sales
           </p>
-
           <p className="mt-1 text-3xl font-bold text-blue-600">
             ₹
             {bills
               .reduce(
                 (total, bill) =>
-                  total +
-                  Number(
-                    bill.grandTotal || 0
-                  ),
+                  total + Number(bill.grandTotal || 0),
                 0
               )
               .toFixed(2)}
@@ -185,38 +167,32 @@ const BillList = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Invoice
                   </th>
-
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Customer
                   </th>
-
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Items
                   </th>
-
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Total
                   </th>
-
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Payment
                   </th>
-
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Date
                   </th>
-
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Action
                   </th>
                 </tr>
               </thead>
-
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {currentBills.map((bill) => (
                   <tr
                     key={bill._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/55 cursor-pointer"
+                    onClick={() => handleOpenModal(bill._id)}
                   >
                     {/* Invoice */}
                     <td className="px-6 py-4">
@@ -228,10 +204,8 @@ const BillList = () => {
                     {/* Customer */}
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {bill.customerName ||
-                          "Walk-in Customer"}
+                        {bill.customerName || "Walk-in Customer"}
                       </p>
-
                       {bill.customerPhone && (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {bill.customerPhone}
@@ -247,20 +221,11 @@ const BillList = () => {
                     {/* Total */}
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        ₹
-                        {Number(
-                          bill.grandTotal || 0
-                        ).toFixed(2)}
+                        ₹{Number(bill.grandTotal || 0).toFixed(2)}
                       </p>
-
-                      {Number(
-                        bill.discount || 0
-                      ) > 0 && (
+                      {Number(bill.discount || 0) > 0 && (
                         <p className="text-xs text-red-500">
-                          Discount: ₹
-                          {Number(
-                            bill.discount
-                          ).toFixed(2)}
+                          Discount: ₹{Number(bill.discount).toFixed(2)}
                         </p>
                       )}
                     </td>
@@ -268,27 +233,27 @@ const BillList = () => {
                     {/* Payment */}
                     <td className="px-6 py-4">
                       <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        {formatPaymentMethod(
-                          bill.paymentMethod
-                        )}
+                        {formatPaymentMethod(bill.paymentMethod)}
                       </span>
                     </td>
 
                     {/* Date */}
                     <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {formatDate(
-                        bill.createdAt
-                      )}
+                      {formatDate(bill.createdAt)}
                     </td>
 
                     {/* Action */}
                     <td className="px-6 py-4 text-right">
-                      <Link
-                        to={`/billing/${bill._id}`}
-                        className="inline-flex px-3 py-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400"
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal(bill._id);
+                        }}
+                        className="inline-flex px-3 py-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 cursor-pointer"
                       >
                         View
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -298,19 +263,13 @@ const BillList = () => {
         ) : (
           /* Empty State */
           <div className="text-center py-16">
-            <div className="text-4xl mb-3">
-              🧾
-            </div>
-
+            <div className="text-4xl mb-3">🧾</div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
               No bills found
             </h3>
-
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Create your first bill to see it
-              here.
+              Create your first bill to see it here.
             </p>
-
             <Link
               to="/billing/create"
               className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
@@ -327,102 +286,72 @@ const BillList = () => {
           currentBills.map((bill) => (
             <div
               key={bill._id}
-              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5"
+              onClick={() => handleOpenModal(bill._id)}
+              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 cursor-pointer active:scale-[0.99] transition"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-semibold text-gray-900 dark:text-white">
                     {bill.billNumber}
                   </p>
-
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    {formatDate(
-                      bill.createdAt
-                    )}
+                    {formatDate(bill.createdAt)}
                   </p>
                 </div>
-
                 <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  {formatPaymentMethod(
-                    bill.paymentMethod
-                  )}
+                  {formatPaymentMethod(bill.paymentMethod)}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-5">
-                {/* Customer */}
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Customer
-                  </p>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Customer</p>
                   <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                    {bill.customerName ||
-                      "Walk-in Customer"}
+                    {bill.customerName || "Walk-in Customer"}
                   </p>
                 </div>
-
-                {/* Items */}
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Items
-                  </p>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Items</p>
                   <p className="mt-1 font-medium text-gray-900 dark:text-white">
                     {bill.items?.length || 0}
                   </p>
                 </div>
-
-                {/* Total */}
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Total
-                  </p>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
                   <p className="mt-1 font-bold text-blue-600">
-                    ₹
-                    {Number(
-                      bill.grandTotal || 0
-                    ).toFixed(2)}
+                    ₹{Number(bill.grandTotal || 0).toFixed(2)}
                   </p>
                 </div>
-
-                {/* Created By */}
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Created By
-                  </p>
-
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Created By</p>
                   <p className="mt-1 font-medium text-gray-900 dark:text-white">
                     {bill.createdBy?.name || "-"}
                   </p>
                 </div>
               </div>
 
-              {/* View Bill */}
-              <Link
-                to={`/billing/${bill._id}`}
-                className="block text-center mt-5 px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              {/* View Bill Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenModal(bill._id);
+                }}
+                className="w-full text-center mt-5 px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
               >
                 View Bill
-              </Link>
+              </button>
             </div>
           ))
         ) : (
           <div className="text-center py-16">
-            <div className="text-4xl mb-3">
-              🧾
-            </div>
-
+            <div className="text-4xl mb-3">🧾</div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
               No bills found
             </h3>
-
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Create your first bill to see it
-              here.
+              Create your first bill to see it here.
             </p>
-
             <Link
               to="/billing/create"
               className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-blue-600 text-white"
@@ -436,7 +365,6 @@ const BillList = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-4 sm:px-6 py-4">
-          {/* Showing information */}
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Showing{" "}
             <span className="font-medium text-gray-900 dark:text-white">
@@ -444,10 +372,7 @@ const BillList = () => {
             </span>{" "}
             to{" "}
             <span className="font-medium text-gray-900 dark:text-white">
-              {Math.min(
-                endIndex,
-                bills.length
-              )}
+              {Math.min(endIndex, bills.length)}
             </span>{" "}
             of{" "}
             <span className="font-medium text-gray-900 dark:text-white">
@@ -456,21 +381,16 @@ const BillList = () => {
             bills
           </p>
 
-          {/* Pagination Controls */}
           <div className="flex items-center gap-1">
-            {/* Previous */}
             <button
               type="button"
-              onClick={() =>
-                goToPage(currentPage - 1)
-              }
+              onClick={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
               className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               ←
             </button>
 
-            {/* Page Numbers */}
             <div className="flex items-center gap-1">
               {Array.from(
                 { length: totalPages },
@@ -479,10 +399,8 @@ const BillList = () => {
                 <button
                   key={page}
                   type="button"
-                  onClick={() =>
-                    goToPage(page)
-                  }
-                  className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  onClick={() => goToPage(page)}
+                  className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${
                     currentPage === page
                       ? "bg-blue-600 text-white"
                       : "border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -493,15 +411,10 @@ const BillList = () => {
               ))}
             </div>
 
-            {/* Next */}
             <button
               type="button"
-              onClick={() =>
-                goToPage(currentPage + 1)
-              }
-              disabled={
-                currentPage === totalPages
-              }
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
               className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               →
@@ -509,6 +422,13 @@ const BillList = () => {
           </div>
         </div>
       )}
+
+      {/* Render the Bill Details Modal */}
+      <BillDetailsModal
+        billId={selectedBillId}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };
