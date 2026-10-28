@@ -43,16 +43,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       >
         
         {/* Project/App Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-green-800">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
               KF
             </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+            <div className="min-w-0 ">
+              <h1 className="text-sm font-bold text-white dark:text-white truncate">
                 Kanakadurga
               </h1>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+              <p className="text-[12px] text-white  truncate font-bold">
                 Fireworks
               </p>
             </div>

@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@keyframes firework-burst {
+  0% {
+    transform: scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.25) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.6) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes firework-glow {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.4), 0 0 10px rgba(249, 115, 22, 0.6);
+  }
+  50% {
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(251, 191, 36, 0.9), 0 0 30px rgba(239, 68, 68, 0.8);
+  }
+}
+
+.animate-firework-burst {
+  animation: firework-burst 1.6s ease-in-out infinite;
+}
+
+.animate-firework-burst-delay {
+  animation: firework-burst 1.6s ease-in-out infinite 0.8s;
+}
+
+.animate-firework-glow {
+  animation: firework-glow 2s ease-in-out infinite;
+}

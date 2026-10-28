@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Sparkles } from 'lucide-react';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const [darkMode, setDarkMode] = useState(() => {
@@ -27,7 +27,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   return (
-    <header className="relative h-16 bg-orange-500 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors print:hidden">
+    <header className="relative h-16 bg-green-800 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors print:hidden">
       {/* Left side: Hamburger button */}
       <div className="flex items-center gap-3 z-10">
         <button
@@ -51,10 +51,23 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
         </button>
       </div>
 
-      {/* Centered Heading */}
-      <h2 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-lg font-semibold text-white dark:text-orange-400 text-center pointer-events-none truncate max-w-[60%]">
-        Kanakadurga Fireworks
-      </h2>
+      {/* Centered Heading with Firework Animation */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none max-w-[70%]">
+        {/* Left Sparkle Burst */}
+        <span className="text-yellow-300 animate-firework-burst flex items-center">
+          <Sparkles size={18} />
+        </span>
+
+        {/* Firework Glowing Title */}
+        <h2 className="text-base sm:text-lg font-bold text-white dark:text-orange-400 text-center tracking-wide truncate animate-firework-glow">
+          💥 Kanakadurga Fireworks 💥
+        </h2>
+
+        {/* Right Sparkle Burst (offset timing) */}
+        <span className="text-yellow-300 animate-firework-burst-delay flex items-center">
+          <Sparkles size={18} />
+        </span>
+      </div>
 
       {/* Right side: Dark mode toggle */}
       <div className="flex items-center gap-3 z-10">
