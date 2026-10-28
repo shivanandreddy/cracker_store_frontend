@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
-import BillDetailsModal from "./BillDetailsModal"; // Make sure the path matches where you saved the modal component
+import BillDetailsModal from "./BillDetailsModal";
+import { useAuth } from "../../context/AuthContext"; // Adjust relative path if needed
 
 const BillList = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -182,9 +187,11 @@ const BillList = () => {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                     Date
                   </th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Action
-                  </th>
+                  {isAdmin && (
+                    <th className="text-right px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -242,19 +249,34 @@ const BillList = () => {
                       {formatDate(bill.createdAt)}
                     </td>
 
-                    {/* Action */}
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenModal(bill._id);
-                        }}
-                        className="inline-flex px-3 py-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 cursor-pointer"
-                      >
-                        View
-                      </button>
-                    </td>
+                    {/* Admin Actions Only */}
+                    {isAdmin && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenModal(bill._id);
+                            }}
+                            className="inline-flex px-3 py-1.5 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 cursor-pointer text-xs font-medium"
+                          >
+                            View
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/billing/edit/${bill._id}`);
+                            }}
+                            className="inline-flex px-3 py-1.5 rounded-md bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 cursor-pointer text-xs font-medium"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -330,17 +352,32 @@ const BillList = () => {
                 </div>
               </div>
 
-              {/* View Bill Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenModal(bill._id);
-                }}
-                className="w-full text-center mt-5 px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
-              >
-                View Bill
-              </button>
+              {/* Mobile Buttons */}
+              <div className="mt-5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenModal(bill._id);
+                  }}
+                  className="flex-1 text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer text-sm font-medium"
+                >
+                  View Bill
+                </button>
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/billing/edit/${bill._id}`);
+                    }}
+                    className="flex-1 text-center px-4 py-2.5 rounded-lg border border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 cursor-pointer text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
           ))
         ) : (

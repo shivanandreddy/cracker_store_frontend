@@ -93,9 +93,42 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className={`w-full max-w-4xl max-h-[90vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${
-        "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100"
-      }`}>
+      {/* Print isolation CSS: hides everything except the receipt card */}
+      <style>{`
+  @media print {
+    /* Hide everything on the page including the Navbar, Sidebar, and App layout */
+    body * {
+      visibility: hidden !important;
+    }
+    nav, header, [role="navigation"], .navbar, aside {
+      display: none !important;
+    }
+
+    /* Make only the receipt card visible and positioned at the top-left */
+    #printable-receipt, #printable-receipt * {
+      visibility: visible !important;
+    }
+    #printable-receipt {
+      position: fixed !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100vw !important;
+      margin: 0 !important;
+      padding: 24px !important;
+      border: none !important;
+      box-shadow: none !important;
+      background: white !important;
+      color: black !important;
+    }
+
+    @page {
+      size: auto;
+      margin: 0;
+    }
+  }
+`}</style>
+
+      <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100">
         
         {/* Modal Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
@@ -129,7 +162,7 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
           ) : (
             <>
               {/* Action buttons */}
-              <div className="flex flex-wrap items-center justify-end gap-3 print:hidden">
+              <div className="flex flex-wrap items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={handlePrint}
@@ -147,14 +180,17 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
                 </button>
               </div>
 
-              {/* Invoice Document Layout */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden print:border-0 print:shadow-none print:m-0 print:p-0">
-                {/* Invoice Header */}
+              {/* ONLY THIS SECTION PRINTS */}
+              <div
+                id="printable-receipt"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden"
+              >
+                {/* Header */}
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
                     <div>
                       <h2 className="text-2xl font-bold text-blue-600">
-                        Cracker Billing
+                        KanakaDurga Fireworks
                       </h2>
                       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Sales Invoice
@@ -251,7 +287,7 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
                   </div>
                 </div>
 
-                {/* Payment Information */}
+                {/* Payment Info */}
                 <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

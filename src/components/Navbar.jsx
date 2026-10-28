@@ -27,9 +27,9 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   return (
-    <header className="h-16 bg-orange-500 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors">
-      <div className="flex items-center gap-3">
-        {/* Hamburger Menu Toggle Button */}
+    <header className="relative h-16 bg-orange-500 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors print:hidden">
+      {/* Left side: Hamburger button */}
+      <div className="flex items-center gap-3 z-10">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="lg:hidden p-2 rounded-lg text-white hover:bg-orange-600 dark:hover:bg-gray-800 focus:outline-none transition-colors"
@@ -49,15 +49,15 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             />
           </svg>
         </button>
-
-        <h2 className="text-base font-semibold text-white dark:text-orange-400">
-          Kanakadurga Fireworks
-        </h2>
       </div>
 
-      {/* Right side dark mode toggle */}
-      <div className="flex items-center gap-3">
-        {/* Dark Mode Toggle Button */}
+      {/* Centered Heading */}
+      <h2 className="absolute left-1/2 -translate-x-1/2 text-base sm:text-lg font-semibold text-white dark:text-orange-400 text-center pointer-events-none truncate max-w-[60%]">
+        Kanakadurga Fireworks
+      </h2>
+
+      {/* Right side: Dark mode toggle */}
+      <div className="flex items-center gap-3 z-10">
         <button
           onClick={toggleTheme}
           aria-label="Toggle Theme"

@@ -14,6 +14,7 @@ import EditProduct from "./pages/products/EditProduct";
 import DeleteProduct from "./pages/products/DeleteProduct";
 
 import CreateBill from "./pages/billing/CreateBill";
+import EditBill from "./pages/billing/EditBill";
 import BillDetails from "./pages/billing/BillDetails";
 import BillList from "./pages/billing/BillList";
 
@@ -30,12 +31,16 @@ const App = () => {
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
 
+              {/* Product Routes */}
               <Route path="/products" element={<ProductList />} />
               <Route path="/products/add" element={<AddProduct />} />
               <Route path="/products/edit/:id" element={<EditProduct />} />
               <Route path="/products/delete/:id" element={<DeleteProduct />} />
+
+              {/* Billing Routes */}
               <Route path="/billing" element={<BillList />} />
               <Route path="/billing/create" element={<CreateBill />} />
+              <Route path="/billing/edit/:id" element={<EditBill />} />
               <Route path="/billing/:id" element={<BillDetails />} />
             </Route>
           </Route>
