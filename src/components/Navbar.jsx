@@ -27,7 +27,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
 
   return (
-    <header className="relative h-16 bg-green-800 dark:bg-gray-900 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors print:hidden">
+    <header className="relative h-16 bg-green-800 dark:bg-green-800 text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 transition-colors print:hidden">
       {/* Left side: Hamburger button */}
       <div className="flex items-center gap-3 z-10">
         <button
@@ -59,7 +59,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
         </span>
 
         {/* Firework Glowing Title */}
-        <h2 className="text-base sm:text-lg font-bold text-white dark:text-orange-400 text-center tracking-wide truncate animate-firework-glow">
+        <h2 className="text-base sm:text-lg font-bold text-white dark:text-white-400 text-center tracking-wide truncate animate-firework-glow">
           💥 Kanakadurga Fireworks 💥
         </h2>
 
