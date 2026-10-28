@@ -241,16 +241,16 @@ const Login = () => {
           <div className="relative w-16 h-16 mx-auto mb-4">
             {/* Sparkle halo behind logo */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-green-800 via-green-600 to-emerald-400 opacity-75 blur-md animate-pulse" />
-            <div className="relative w-16 h-16 rounded-2xl bg-green-800 flex items-center justify-center text-white font-black text-2xl shadow-lg border border-green-600">
-              KF
+            <div className="relative w-16 h-16 rounded-2xl  flex items-center justify-center  font-black text-2xl shadow-lg border border-green-100">
+              KDF
             </div>
           </div>
 
           {/* Title */}
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="w-5 h-5 text-green-400 animate-spin" style={{ animationDuration: "5s" }} />
-            <h1 className="text-2xl sm:text-3xl font-black text-green-400 tracking-wide animate-cracker-glow">
-              Kanakadurga Fireworks
+            <h1 className="text-2xl sm:text-3xl font-black  tracking-wide animate-cracker-glow">
+              KanakaDurga Fireworks
             </h1>
             <Sparkles className="w-5 h-5 text-green-400 animate-spin" style={{ animationDuration: "5s" }} />
           </div>

@@ -60,7 +60,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
 
         {/* Firework Glowing Title */}
         <h2 className="text-base sm:text-lg font-bold text-white dark:text-white-400 text-center tracking-wide truncate animate-firework-glow">
-          💥 Kanakadurga Fireworks 💥
+          💥 KanakaDurga Fireworks 💥
         </h2>
 
         {/* Right Sparkle Burst (offset timing) */}

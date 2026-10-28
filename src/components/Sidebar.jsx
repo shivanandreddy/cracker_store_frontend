@@ -56,12 +56,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         <div className="h-16 min-h-16 flex-shrink-0 flex items-center justify-between px-4 border-b border-green-700 bg-green-800">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center text-white font-bold text-sm shadow-sm flex-shrink-0">
-              KF
+              KDF
             </div>
 
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-white truncate">
-                Kanakadurga
+                KanakaDurga
               </h1>
               <p className="text-xs text-white font-bold truncate">
                 Fireworks
