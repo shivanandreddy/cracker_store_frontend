@@ -40,6 +40,11 @@ const BillDetails = () => {
       return;
     }
 
+    const hasDiscount = Number(bill.discount) > 0;
+    const discountLine = hasDiscount
+      ? `Discount           : -₹${Number(bill.discount).toFixed(2)}\n`
+      : "";
+
     // Formatted text invoice template for WhatsApp
     const message = 
 `\`\`\`
@@ -64,8 +69,7 @@ ${bill.items
   .join("\n")}
 --------------------------------
 Subtotal           : ₹${Number(bill.subtotal).toFixed(2)}
-Discount           : -₹${Number(bill.discount || 0).toFixed(2)}
-GRAND TOTAL        : ₹${Number(bill.grandTotal).toFixed(2)}
+${discountLine}GRAND TOTAL        : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
 Payment Mode: ${bill.paymentMethod.toUpperCase()}
 ================================
@@ -123,6 +127,8 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
     );
   }
 
+  const hasDiscount = Number(bill.discount) > 0;
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Action buttons */}
@@ -173,7 +179,6 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
               <h2 className="text-3xl font-bold text-blue-600">
                 KanakaDurga Fireworks
               </h2>
-              
             </div>
             <div className="md:text-right">
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -277,12 +282,17 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
                 ₹{Number(bill.subtotal).toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Discount</span>
-              <span className="font-medium text-red-600">
-                - ₹{Number(bill.discount || 0).toFixed(2)}
-              </span>
-            </div>
+
+            {/* Discount Row: Only rendered if count > 0 */}
+            {hasDiscount && (
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Discount</span>
+                <span className="font-medium text-red-600">
+                  - ₹{Number(bill.discount).toFixed(2)}
+                </span>
+              </div>
+            )}
+
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold text-gray-900 dark:text-white">
