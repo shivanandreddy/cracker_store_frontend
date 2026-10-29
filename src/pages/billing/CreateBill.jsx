@@ -655,14 +655,16 @@ const CreateBill = () => {
                             Product
                           </th>
                           <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Selling Price
-                          </th>
-                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Purchase Price
+                            Item Code
                           </th>
                           <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
                             Quantity
                           </th>
+                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
+                            Rate
+                          </th>
+                          
+                          
                           <th className="text-right px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
                             Total
                           </th>
@@ -681,15 +683,9 @@ const CreateBill = () => {
                                 {item.unit}
                               </p>
                             </td>
-
                             <td className="px-6 py-4 print:px-2 print:py-2 text-gray-700 dark:text-gray-300 print:text-black">
-                              ₹{(item.price || 0).toFixed(2)}
+                              {(item.purchasePrice)}
                             </td>
-
-                            <td className="px-6 py-4 print:px-2 print:py-2 text-gray-700 dark:text-gray-300 print:text-black">
-                              ₹{(item.purchasePrice || 0).toFixed(2)}
-                            </td>
-
                             <td className="px-6 py-4 print:px-2 print:py-2">
                               {/* Quantity in Print View: plain text */}
                               <span className="hidden print:inline font-medium text-black">
@@ -729,6 +725,14 @@ const CreateBill = () => {
                                 </button>
                               </div>
                             </td>
+
+                            <td className="px-6 py-4 print:px-2 print:py-2 text-gray-700 dark:text-gray-300 print:text-black">
+                              ₹{(item.price || 0).toFixed(2)}
+                            </td>
+
+                            
+
+                            
 
                             <td className="px-6 py-4 print:px-2 print:py-2 text-right font-semibold text-gray-900 dark:text-white print:text-black">
                               ₹{(item.price * item.quantity).toFixed(2)}

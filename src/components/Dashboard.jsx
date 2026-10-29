@@ -143,14 +143,13 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchActiveUsers();
-      // Auto-refresh active users count every 30 seconds
       const interval = setInterval(fetchActiveUsers, 30000);
       return () => clearInterval(interval);
     }
   }, [user]);
 
   // ---------------------------------------------------------
-  // Fetch Billing Summary
+  // Fetch Billing Summary (Handles null / unassigned createdBy)
   // ---------------------------------------------------------
   useEffect(() => {
     const fetchBillingSummary = async () => {
@@ -168,10 +167,13 @@ const Dashboard = () => {
         const userWiseBilling = {};
 
         bills.forEach((bill) => {
+          // Graceful fallback when createdBy is null or unpopulated
           const createdBy = bill.createdBy;
-          if (!createdBy?._id) return;
+          const userId = createdBy?._id || "system";
+          const userName = createdBy?.name || "Store Admin / Direct";
+          const userEmail = createdBy?.email || "-";
+          const userRole = createdBy?.role || "staff";
 
-          const userId = createdBy._id;
           const paymentMethod = String(bill.paymentMethod || "")
             .trim()
             .toLowerCase();
@@ -179,10 +181,10 @@ const Dashboard = () => {
 
           if (!userWiseBilling[userId]) {
             userWiseBilling[userId] = {
-              userId: createdBy._id,
-              userName: createdBy.name,
-              email: createdBy.email,
-              role: createdBy.role,
+              userId,
+              userName,
+              email: userEmail,
+              role: userRole,
               totalBills: 0,
               creditBills: 0,
               cashBills: 0,
@@ -528,7 +530,7 @@ const Dashboard = () => {
                             {index + 1}
                           </td>
                           <td className="px-2 py-2 sm:px-4 sm:py-3">
-                            <p className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white truncate max-w-[120px]">
+                            <p className="font-medium text-xs sm:text-sm text-gray-900 dark:text-white truncate max-w-[140px]">
                               {item.userName}
                             </p>
                           </td>
