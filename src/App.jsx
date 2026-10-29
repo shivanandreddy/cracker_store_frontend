@@ -18,6 +18,8 @@ import EditBill from "./pages/billing/EditBill";
 import BillDetails from "./pages/billing/BillDetails";
 import BillList from "./pages/billing/BillList";
 
+import Reports from "./pages/reports/Reports";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -42,6 +44,8 @@ const App = () => {
               <Route path="/billing/create" element={<CreateBill />} />
               <Route path="/billing/edit/:id" element={<EditBill />} />
               <Route path="/billing/:id" element={<BillDetails />} />
+
+              <Route path="/reports" element={<Reports />} />
             </Route>
           </Route>
 
