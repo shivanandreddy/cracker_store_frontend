@@ -622,10 +622,10 @@ const EditBill = () => {
                             Product
                           </th>
                           <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                            Selling Price
+                           Price
                           </th>
                           <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                            Purchase Price
+                            ItemNo
                           </th>
                           <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                             Quantity
@@ -654,7 +654,7 @@ const EditBill = () => {
                             </td>
 
                             <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                              ₹{(item.purchasePrice || 0).toFixed(2)}
+                              {(item.purchasePrice)}
                             </td>
 
                             <td className="px-6 py-4">
@@ -724,7 +724,7 @@ const EditBill = () => {
                           </td>
 
                           <td className="px-6 py-4 text-gray-600 dark:text-gray-300 font-bold">
-                            ₹{totalPurchasePrice.toFixed(2)}
+                            {totalPurchasePrice}
                           </td>
 
                           <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
