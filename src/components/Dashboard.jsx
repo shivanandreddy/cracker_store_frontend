@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Users, Circle, RefreshCw, Clock } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -12,6 +12,12 @@ const Dashboard = () => {
   const [billingSummary, setBillingSummary] = useState([]);
   const [loadingBilling, setLoadingBilling] = useState(false);
   const [billingError, setBillingError] = useState("");
+
+  // Online Active Users state
+  const [activeUsers, setActiveUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userError, setUserError] = useState("");
 
   // ---------------------------------------------------------
   // Ambient Fireworks / Cracker Sparkles Canvas
@@ -32,7 +38,6 @@ const Dashboard = () => {
     };
     window.addEventListener("resize", handleResize);
 
-    const sparks = [];
     const crackerColors = ["#166534", "#22c55e", "#4ade80", "#86efac", "#a3e635", "#fde047"];
 
     class CrackerBurst {
@@ -63,7 +68,7 @@ const Dashboard = () => {
           const p = this.particles[i];
           p.x += p.vx;
           p.y += p.vy;
-          p.vy += 0.04; // gravity
+          p.vy += 0.04;
           p.alpha -= p.decay;
           if (p.alpha <= 0) {
             this.particles.splice(i, 1);
@@ -94,7 +99,6 @@ const Dashboard = () => {
       ctx.clearRect(0, 0, width, height);
 
       frameCount++;
-      // Spawn gentle ambient cracker bursts in the header area
       if (frameCount % 60 === 0) {
         bursts.push(new CrackerBurst());
       }
@@ -118,6 +122,36 @@ const Dashboard = () => {
     };
   }, []);
 
+  // ---------------------------------------------------------
+  // Fetch Active Logged-in Users
+  // ---------------------------------------------------------
+  const fetchActiveUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      setUserError("");
+      const response = await api.get("/auth/active-users");
+      setActiveUsers(response.data.activeUsers || []);
+      setAllUsers(response.data.allUsers || []);
+    } catch (err) {
+      console.error("Fetch Active Users Error:", err);
+      setUserError("Failed to fetch online users.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchActiveUsers();
+      // Auto-refresh active users count every 30 seconds
+      const interval = setInterval(fetchActiveUsers, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // ---------------------------------------------------------
+  // Fetch Billing Summary
+  // ---------------------------------------------------------
   useEffect(() => {
     const fetchBillingSummary = async () => {
       if (user?.role !== "admin" && user?.role !== "user") {
@@ -251,6 +285,11 @@ const Dashboard = () => {
   grandTotals.receivedAmount =
     grandTotals.totalAmount - grandTotals.creditAmount;
 
+  const formatLastActive = (date) => {
+    if (!date) return "Never";
+    return new Date(date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   return (
     <div className="relative min-h-full">
       {/* Background Cracker Sparkles Layer */}
@@ -273,11 +312,11 @@ const Dashboard = () => {
         }
       `}</style>
 
-      <div className="relative z-10">
+      <div className="relative z-10 space-y-8">
         {/* ==========================================
             HEADER
         ========================================== */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-wide">
@@ -301,10 +340,123 @@ const Dashboard = () => {
         </div>
 
         {/* ==========================================
+            ACTIVE USERS ONLINE PANEL
+        ========================================== */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xs border border-gray-200 dark:border-gray-800 p-5">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                <Users size={18} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  Active Users Online
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse" />
+                    {activeUsers.length} Online
+                  </span>
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Real-time active sessions across staff and operators
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={fetchActiveUsers}
+              disabled={loadingUsers}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition cursor-pointer"
+              title="Refresh online status"
+            >
+              <RefreshCw size={15} className={loadingUsers ? "animate-spin" : ""} />
+            </button>
+          </div>
+
+          {userError && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-3">{userError}</p>
+          )}
+
+          {/* Active Users Horizontal Scroll / Grid */}
+          <div className="mt-4">
+            {allUsers.length === 0 && !loadingUsers ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-3 text-center">
+                No registered users found.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {allUsers.map((u) => {
+                  const isOnline = activeUsers.some((act) => act._id === u._id);
+
+                  return (
+                    <div
+                      key={u._id}
+                      className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                        isOnline
+                          ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300/80 dark:border-emerald-800/60 shadow-xs"
+                          : "bg-gray-50/50 dark:bg-gray-800/40 border-gray-200/70 dark:border-gray-800/70 opacity-70"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Avatar with Status Dot */}
+                        <div className="relative shrink-0">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs ${
+                            isOnline 
+                              ? "bg-green-800 text-white" 
+                              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                          }`}>
+                            {u.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <span
+                            className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-gray-900 ${
+                              isOnline ? "bg-emerald-500" : "bg-gray-400"
+                            }`}
+                          />
+                        </div>
+
+                        {/* Name and Role */}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {u.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 capitalize truncate">
+                            {u.role}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Online status indicator */}
+                      <div className="text-right shrink-0">
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                            isOnline
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300"
+                              : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                          }`}
+                        >
+                          <Circle
+                            size={5}
+                            className={isOnline ? "fill-emerald-500 text-emerald-500" : "fill-gray-400 text-gray-400"}
+                          />
+                          {isOnline ? "Online" : "Offline"}
+                        </span>
+                        <div className="flex items-center justify-end gap-1 text-[10px] text-gray-400 mt-1">
+                          <Clock size={10} />
+                          <span>{formatLastActive(u.lastActiveAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ==========================================
             BILLING TABLE
         ========================================== */}
         {(user?.role === "admin" || user?.role === "user") && (
-          <div className="mt-8">
+          <div>
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -454,7 +606,7 @@ const Dashboard = () => {
         {/* ==========================================
             QUICK ACTIONS WITH CRACKER EFFECTS
         ========================================== */}
-        <div className="mt-8">
+        <div>
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Quick Actions
