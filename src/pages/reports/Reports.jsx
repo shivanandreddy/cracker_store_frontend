@@ -146,7 +146,7 @@ const Reports = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <FileSpreadsheet className="text-green-800 dark:text-green-500" />
-            Business Reports
+            Reports
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Preview, analyze, and download Excel-compatible CSV sheets.
