@@ -8,6 +8,9 @@ const Login = () => {
   const { login } = useAuth();
   const canvasRef = useRef(null);
 
+  // Reference container for spawning spark particles directly onto canvas
+  const crackerEngineRef = useRef(null);
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -105,16 +108,16 @@ const Login = () => {
     }
 
     class Particle {
-      constructor(x, y, color) {
+      constructor(x, y, color, speedMultiplier = 1, decayRate = null) {
         this.x = x;
         this.y = y;
         this.color = color;
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 5 + 1.5;
+        const speed = (Math.random() * 4 + 1.5) * speedMultiplier;
         this.vx = Math.cos(angle) * speed;
         this.vy = Math.sin(angle) * speed;
         this.alpha = 1;
-        this.decay = Math.random() * 0.015 + 0.012;
+        this.decay = decayRate || (Math.random() * 0.018 + 0.014);
         this.gravity = 0.08;
         this.friction = 0.96;
       }
@@ -141,6 +144,17 @@ const Login = () => {
         ctx.restore();
       }
     }
+
+    // Expose particle triggering directly for typing events
+    crackerEngineRef.current = {
+      spawnSparkBurst: (x, y) => {
+        const sparkCount = 18;
+        for (let i = 0; i < sparkCount; i++) {
+          const color = crackerColors[Math.floor(Math.random() * crackerColors.length)];
+          particles.push(new Particle(x, y, color, 1.2, 0.035));
+        }
+      },
+    };
 
     let frameCount = 0;
 
@@ -184,11 +198,23 @@ const Login = () => {
     };
   }, []);
 
+  // Trigger spark explosion at the active input element
+  const triggerTypingSpark = (event) => {
+    if (!crackerEngineRef.current) return;
+    const rect = event.target.getBoundingClientRect();
+    // Burst originates near the cursor/right side of the input field
+    const spawnX = rect.left + Math.min(rect.width * 0.45 + (event.target.value.length * 8), rect.width - 25);
+    const spawnY = rect.top + rect.height / 2;
+
+    crackerEngineRef.current.spawnSparkBurst(spawnX, spawnY);
+  };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    triggerTypingSpark(e);
   };
 
   const handleSubmit = async (e) => {
@@ -213,7 +239,7 @@ const Login = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gray-950 px-4 overflow-hidden">
-      {/* Background Canvas for Crackers & Rockets */}
+      {/* Background Canvas for Crackers, Rockets & Typing Sparks */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 z-0 pointer-events-none w-full h-full"
@@ -232,6 +258,22 @@ const Login = () => {
         .animate-cracker-glow {
           animation: cracker-glow 2.2s ease-in-out infinite;
         }
+
+        /* Input Cracker Spark Flash Animation */
+        @keyframes input-spark-flash {
+          0% {
+            box-shadow: 0 0 0px rgba(74, 222, 128, 0);
+          }
+          50% {
+            box-shadow: 0 0 14px rgba(74, 222, 128, 0.8), 0 0 24px rgba(34, 197, 94, 0.5);
+          }
+          100% {
+            box-shadow: 0 0 4px rgba(74, 222, 128, 0.3);
+          }
+        }
+        .input-spark-active:focus {
+          animation: input-spark-flash 0.4s ease-out;
+        }
       `}</style>
 
       {/* Login Card: Dark Glassmorphism Container */}
@@ -241,7 +283,7 @@ const Login = () => {
           <div className="relative w-16 h-16 mx-auto mb-4">
             {/* Sparkle halo behind logo */}
             <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-green-800 via-green-600 to-emerald-400 opacity-75 blur-md animate-pulse" />
-            <div className="relative w-16 h-16 rounded-2xl  flex items-center justify-center  font-black text-2xl shadow-lg border border-green-100">
+            <div className="relative w-16 h-16 rounded-2xl bg-green-800 flex items-center justify-center font-black text-2xl text-orange-300 shadow-lg border border-green-600 animate-cracker-glow">
               KDF
             </div>
           </div>
@@ -249,7 +291,7 @@ const Login = () => {
           {/* Title */}
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="w-5 h-5 text-green-400 animate-spin" style={{ animationDuration: "5s" }} />
-            <h1 className="text-2xl sm:text-3xl font-black  tracking-wide animate-cracker-glow">
+            <h1 className="text-2xl sm:text-3xl font-black text-orange-200 tracking-wide animate-cracker-glow">
               KanakaDurga Fireworks
             </h1>
             <Sparkles className="w-5 h-5 text-green-400 animate-spin" style={{ animationDuration: "5s" }} />
@@ -274,15 +316,21 @@ const Login = () => {
             <label className="block mb-2 text-sm font-medium text-gray-300">
               Email
             </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-800 bg-gray-950/70 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
-            />
+            <div className="relative">
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                onKeyDown={triggerTypingSpark}
+                placeholder="Enter your email"
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-800 bg-gray-950/70 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 input-spark-active transition"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-400/60 pointer-events-none">
+                ✨
+              </span>
+            </div>
           </div>
 
           {/* Password */}
@@ -290,15 +338,21 @@ const Login = () => {
             <label className="block mb-2 text-sm font-medium text-gray-300">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-              className="w-full px-4 py-3 rounded-lg border border-gray-800 bg-gray-950/70 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 transition"
-            />
+            <div className="relative">
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                onKeyDown={triggerTypingSpark}
+                placeholder="Enter your password"
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-800 bg-gray-950/70 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-600 input-spark-active transition"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-400/60 pointer-events-none">
+                🧨
+              </span>
+            </div>
           </div>
 
           {/* Submit Button */}
