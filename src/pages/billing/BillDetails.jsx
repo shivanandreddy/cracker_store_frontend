@@ -3,7 +3,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import { X } from "lucide-react";
 import api from "../../services/api";
 
-const BillDetailsModal = ({ billId, isOpen, onClose }) => {
+const BillDetails = ({ billId, isOpen, onClose }) => {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -398,4 +398,4 @@ Payment Mode    : ${bill.paymentMethod.toUpperCase()}
   );
 };
 
-export default BillDetailsModal;
+export default BillDetails;
