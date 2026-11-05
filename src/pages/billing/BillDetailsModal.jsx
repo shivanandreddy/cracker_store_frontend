@@ -91,6 +91,64 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
     window.print();
   };
 
+  const handleBluetoothPrint = async () => {
+    if (!bill) return;
+
+    const receiptText = 
+`================================
+     KanakaDurga Fireworks      
+             INVOICE            
+================================
+Invoice   : ${bill.billNumber}
+Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
+Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
+Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
+Phone     : ${bill.customerPhone || "-"}
+--------------------------------
+ITEM NAME       QTY     TOTAL(₹)
+--------------------------------
+${bill.items
+  .map(
+    (item) =>
+      `${item.name.padEnd(14, " ").substring(0, 14)} ${String(item.quantity).padStart(3, " ")}  ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
+  )
+  .join("\n")}
+--------------------------------
+Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
+Discount        :-₹${Number(bill.discount || 0).toFixed(2)}
+GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
+--------------------------------
+Payment Mode    : ${bill.paymentMethod.toUpperCase()}
+================================
+    Thank you for your visit!   
+        Please Visit Again      
+================================\n\n\n`;
+
+    try {
+      if (!navigator.bluetooth) {
+        alert("Web Bluetooth is not supported on this browser or device.");
+        return;
+      }
+
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+      });
+
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+      const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(receiptText);
+      await characteristic.writeValue(data);
+      alert("Printed successfully via Bluetooth!");
+    } catch (error) {
+      console.error("Bluetooth print failed:", error);
+      alert("Bluetooth printing cancelled or failed. Ensure Bluetooth is turned on.");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
       {/* Thermal Print isolation CSS - Bold Monospace format for 58mm roll */}
@@ -170,10 +228,18 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
               <div className="flex flex-wrap items-center justify-end gap-3 no-print">
                 <button
                   type="button"
+                  onClick={handleBluetoothPrint}
+                  className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 text-sm font-medium flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>🖨️</span> Print (Bluetooth)
+                </button>
+
+                <button
+                  type="button"
                   onClick={handlePrint}
                   className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium flex items-center gap-1.5 cursor-pointer"
                 >
-                  <span>🖨️</span> Print Bill
+                  <span>🖨️</span> Print Bill (PC)
                 </button>
 
                 <button
