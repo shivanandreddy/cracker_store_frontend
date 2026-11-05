@@ -1,28 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
+import { X } from "lucide-react";
 import api from "../../services/api";
 
-const BillDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
+const BillDetails = ({ billId, isOpen, onClose }) => {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!isOpen || !billId) return;
+
     const fetchBill = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response = await api.get(`/bills/${id}`);
+        const response = await api.get(`/bills/${billId}`);
         setBill(response.data.bill);
       } catch (error) {
         console.error("Fetch Bill Error:", error);
         setError(
-          error.response?.data?.message || "Failed to load bill."
+          error.response?.data?.message || "Failed to load bill details."
         );
       } finally {
         setLoading(false);
@@ -30,9 +29,12 @@ const BillDetails = () => {
     };
 
     fetchBill();
-  }, [id]);
+  }, [billId, isOpen]);
+
+  if (!isOpen) return null;
 
   const handleWhatsApp = () => {
+    if (!bill) return;
     const phone = bill.customerPhone?.replace(/\D/g, "");
 
     if (!phone) {
@@ -40,17 +42,11 @@ const BillDetails = () => {
       return;
     }
 
-    const hasDiscount = Number(bill.discount) > 0;
-    const discountLine = hasDiscount
-      ? `Discount           : -₹${Number(bill.discount).toFixed(2)}\n`
-      : "";
-
-    // Formatted text invoice template for WhatsApp
     const message = 
 `\`\`\`
 ================================
-      KanakaDurga Fireworks           
-          INVOICE             
+     KanakaDurga Fireworks          
+             INVOICE            
 ================================
 Invoice   :    ${bill.billNumber}
 Date      :    ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
@@ -58,7 +54,7 @@ Time      :    ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
 Customer  :    ${bill.customerName || "Walk-in Customer"}
 Phone     :    ${bill.customerPhone || "-"}
 --------------------------------
-ITEM NAME         QTY  TOTAL (₹)
+ITEM NAME        QTY  TOTAL (₹)
 --------------------------------
 ${bill.items
   .map(
@@ -68,20 +64,18 @@ ${bill.items
   )
   .join("\n")}
 --------------------------------
-Subtotal           : ₹${Number(bill.subtotal).toFixed(2)}
-${discountLine}GRAND TOTAL        : ₹${Number(bill.grandTotal).toFixed(2)}
+Subtotal         : ₹${Number(bill.subtotal).toFixed(2)}
+Discount         : -₹${Number(bill.discount || 0).toFixed(2)}
+GRAND TOTAL      : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
 Payment Mode: ${bill.paymentMethod.toUpperCase()}
 ================================
     Thank you for your visit!        
-        Please Visit Again             
+        Please Visit Again            
 ================================
 \`\`\``;
 
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(
-      message
-    )}`;
-
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
@@ -97,246 +91,242 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
     window.print();
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-20">
-        <p className="text-gray-600 dark:text-gray-300">Loading bill...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-2xl mx-auto mt-10">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-red-700 dark:text-red-400">{error}</p>
-          <button
-            onClick={() => navigate("/billing")}
-            className="mt-5 px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Back to Bills
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!bill) {
-    return (
-      <div className="text-center py-20 text-gray-500">Bill not found.</div>
-    );
-  }
-
-  const hasDiscount = Number(bill.discount) > 0;
-
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Action buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Bill Details
-          </h1>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">
-            Invoice {bill.billNumber}
-          </p>
-        </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+      {/* Thermal Print isolation CSS - Bold Monospace format for 58mm roll */}
+      <style>{`
+        @media print {
+          /* Hide screen UI */
+          body * {
+            visibility: hidden !important;
+          }
+          nav, header, [role="navigation"], .navbar, aside, .no-print {
+            display: none !important;
+          }
 
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/billing")}
-            className="px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            Back
-          </button>
+          /* Render ONLY raw thermal receipt */
+          #raw-thermal-receipt, #raw-thermal-receipt * {
+            visibility: visible !important;
+          }
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-1.5"
-          >
-            <span>🖨️</span> Print Bill
-          </button>
+          #raw-thermal-receipt {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 48mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            color: black !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
+            line-height: 1.2 !important;
+            white-space: pre !important;
+          }
 
-          {/* WhatsApp Template Share Button with official icon */}
-          <button
-            onClick={handleWhatsApp}
-            className="px-4 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 font-medium transition-colors"
-          >
-            <FaWhatsapp size={20} />
-            <span>Share Template</span>
-          </button>
-        </div>
-      </div>
+          @page {
+            size: 58mm auto;
+            margin: 0;
+          }
+        }
+      `}</style>
 
-      {/* Invoice Document Layout */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden print:border-0 print:shadow-none print:m-0 print:p-0">
-        {/* Invoice Header */}
-        <div className="p-8 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            <div>
-              <h2 className="text-3xl font-bold text-blue-600">
-                KanakaDurga Fireworks
-              </h2>
-            </div>
-            <div className="md:text-right">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Invoice Number
-              </p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                {bill.billNumber}
-              </p>
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Date</p>
-              <p className="font-medium text-gray-900 dark:text-white">
-                {formatDate(bill.createdAt)}
-              </p>
-            </div>
+      <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100">
+        
+        {/* Modal Header Bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <div>
+            <h2 className="text-lg font-bold">Bill Details</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {bill ? `Invoice ${bill.billNumber}` : "Loading receipt information..."}
+            </p>
           </div>
+          
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full transition cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Customer Information */}
-        <div className="p-8 border-b border-gray-200 dark:border-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Customer Name
-              </p>
-              <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                {bill.customerName || "Walk-in Customer"}
-              </p>
+        {/* Modal Body Content */}
+        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <p className="text-gray-600 dark:text-gray-300 animate-pulse">Loading bill...</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Customer Phone
-              </p>
-              <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                {bill.customerPhone || "-"}
-              </p>
+          ) : error ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-red-700 dark:text-red-400">{error}</p>
             </div>
-          </div>
-        </div>
+          ) : !bill ? (
+            <div className="text-center py-20 text-gray-500">Bill not found.</div>
+          ) : (
+            <>
+              {/* Action buttons */}
+              <div className="flex flex-wrap items-center justify-end gap-3 no-print">
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>🖨️</span> Print Bill
+                </button>
 
-        {/* Items Table */}
-        <div className="p-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">
-            Purchased Items
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-3 pr-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    #
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Product
-                  </th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Qty
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Price
-                  </th>
-                  <th className="text-right py-3 pl-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {bill.items.map((item, index) => (
-                  <tr
-                    key={`${item.productId}-${index}`}
-                    className="border-b border-gray-100 dark:border-gray-800"
-                  >
-                    <td className="py-4 pr-4 text-gray-500 dark:text-gray-400">
-                      {index + 1}
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {item.name}
+                <button
+                  onClick={handleWhatsApp}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <FaWhatsapp size={18} />
+                  <span>Share Template</span>
+                </button>
+              </div>
+
+              {/* HIDDEN IN SCREEN PREVIEW - VISIBLE ONLY DURING PRINTING */}
+              <pre id="raw-thermal-receipt" className="hidden">
+{`================================
+     KanakaDurga Fireworks      
+             INVOICE            
+================================
+Invoice   : ${bill.billNumber}
+Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
+Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
+Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
+Phone     : ${bill.customerPhone || "-"}
+--------------------------------
+ITEM NAME       QTY     TOTAL(₹)
+--------------------------------
+${bill.items
+  .map(
+    (item) =>
+      `${item.name.padEnd(14, " ").substring(0, 14)} ${String(item.quantity).padStart(3, " ")}  ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
+  )
+  .join("\n")}
+--------------------------------
+Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
+Discount        :-₹${Number(bill.discount || 0).toFixed(2)}
+GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
+--------------------------------
+Payment Mode    : ${bill.paymentMethod.toUpperCase()}
+================================
+    Thank you for your visit!   
+        Please Visit Again      
+================================`}
+              </pre>
+
+              {/* SCREEN UI DISPLAY (Rich Web Invoice) */}
+              <div
+                id="printable-receipt"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden"
+              >
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+                    <div>
+                      <h2 className="text-2xl font-bold text-blue-600">
+                        KanakaDurga Fireworks
+                      </h2>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Sales Invoice
                       </p>
-                    </td>
-                    <td className="py-4 px-4 text-center text-gray-700 dark:text-gray-300">
-                      {item.quantity}
-                    </td>
-                    <td className="py-4 px-4 text-right text-gray-700 dark:text-gray-300">
-                      ₹{Number(item.price).toFixed(2)}
-                    </td>
-                    <td className="py-4 pl-4 text-right font-medium text-gray-900 dark:text-white">
-                      ₹{Number(item.total).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    </div>
+                    <div className="md:text-right">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Invoice Number
+                      </p>
+                      <p className="text-lg font-bold text-gray-900 dark:text-white">
+                        {bill.billNumber}
+                      </p>
+                      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Date</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {formatDate(bill.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-        {/* Summary */}
-        <div className="px-8 pb-8">
-          <div className="ml-auto w-full md:w-96 space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                ₹{Number(bill.subtotal).toFixed(2)}
-              </span>
-            </div>
+                {/* Items Table */}
+                <div className="p-6">
+                  <h3 className="text-md font-semibold text-gray-900 dark:text-white mb-4">
+                    Purchased Items
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="text-left py-2.5 pr-4 font-semibold text-gray-600 dark:text-gray-300">#</th>
+                          <th className="text-left py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Product</th>
+                          <th className="text-center py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Qty</th>
+                          <th className="text-right py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Price</th>
+                          <th className="text-right py-2.5 pl-4 font-semibold text-gray-600 dark:text-gray-300">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bill.items.map((item, index) => (
+                          <tr
+                            key={`${item.productId}-${index}`}
+                            className="border-b border-gray-100 dark:border-gray-800"
+                          >
+                            <td className="py-3 pr-4 text-gray-500 dark:text-gray-400">{index + 1}</td>
+                            <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{item.name}</td>
+                            <td className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">{item.quantity}</td>
+                            <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300">₹{Number(item.price).toFixed(2)}</td>
+                            <td className="py-3 pl-4 text-right font-medium text-gray-900 dark:text-white">₹{Number(item.total).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-            {/* Discount Row: Only rendered if count > 0 */}
-            {hasDiscount && (
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Discount</span>
-                <span className="font-medium text-red-600">
-                  - ₹{Number(bill.discount).toFixed(2)}
-                </span>
+                {/* Summary */}
+                <div className="px-6 pb-6">
+                  <div className="ml-auto w-full md:w-80 space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                      <span className="font-medium text-gray-900 dark:text-white">₹{Number(bill.subtotal).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Discount</span>
+                      <span className="font-medium text-red-600">- ₹{Number(bill.discount || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-base font-bold text-gray-900 dark:text-white">Grand Total</span>
+                        <span className="text-xl font-bold text-blue-600">₹{Number(bill.grandTotal).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Info */}
+                <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Payment Method</p>
+                      <span className="inline-block mt-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-medium capitalize">
+                        {bill.paymentMethod}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Created By</p>
+                      <p className="mt-0.5 font-medium text-gray-900 dark:text-white text-sm">{bill.createdBy?.name || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 text-center border-t border-gray-200 dark:border-gray-800">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Thank you for your purchase!</p>
+                </div>
               </div>
-            )}
-
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-900 dark:text-white">
-                  Grand Total
-                </span>
-                <span className="text-2xl font-bold text-blue-600">
-                  ₹{Number(bill.grandTotal).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
-        {/* Payment Information */}
-        <div className="p-8 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Payment Method
-              </p>
-              <span className="inline-block mt-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-sm font-medium capitalize">
-                {bill.paymentMethod}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Created By
-              </p>
-              <p className="mt-1 font-medium text-gray-900 dark:text-white">
-                {bill.createdBy?.name || "-"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-8 text-center border-t border-gray-200 dark:border-gray-800">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Thank you for your purchase!
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            This is a computer-generated invoice.
-          </p>
-        </div>
       </div>
     </div>
   );

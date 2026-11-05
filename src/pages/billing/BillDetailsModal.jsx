@@ -93,40 +93,45 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      {/* Print isolation CSS: hides everything except the receipt card */}
+      {/* Thermal Print isolation CSS - Bold Monospace format for 58mm roll */}
       <style>{`
-  @media print {
-    /* Hide everything on the page including the Navbar, Sidebar, and App layout */
-    body * {
-      visibility: hidden !important;
-    }
-    nav, header, [role="navigation"], .navbar, aside {
-      display: none !important;
-    }
+        @media print {
+          /* Hide screen UI */
+          body * {
+            visibility: hidden !important;
+          }
+          nav, header, [role="navigation"], .navbar, aside, .no-print {
+            display: none !important;
+          }
 
-    /* Make only the receipt card visible and positioned at the top-left */
-    #printable-receipt, #printable-receipt * {
-      visibility: visible !important;
-    }
-    #printable-receipt {
-      position: fixed !important;
-      left: 0 !important;
-      top: 0 !important;
-      width: 100vw !important;
-      margin: 0 !important;
-      padding: 24px !important;
-      border: none !important;
-      box-shadow: none !important;
-      background: white !important;
-      color: black !important;
-    }
+          /* Render ONLY raw thermal receipt */
+          #raw-thermal-receipt, #raw-thermal-receipt * {
+            visibility: visible !important;
+          }
 
-    @page {
-      size: auto;
-      margin: 0;
-    }
-  }
-`}</style>
+          #raw-thermal-receipt {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 48mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            color: black !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 10px !important;
+            font-weight: bold !important;
+            line-height: 1.2 !important;
+            white-space: pre !important;
+          }
+
+          @page {
+            size: 58mm auto;
+            margin: 0;
+          }
+        }
+      `}</style>
 
       <div className="w-full max-w-4xl max-h-[90vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100">
         
@@ -162,7 +167,7 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
           ) : (
             <>
               {/* Action buttons */}
-              <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-3 no-print">
                 <button
                   type="button"
                   onClick={handlePrint}
@@ -180,7 +185,39 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
                 </button>
               </div>
 
-              {/* ONLY THIS SECTION PRINTS */}
+              {/* HIDDEN IN SCREEN PREVIEW - VISIBLE ONLY DURING PRINTING */}
+              <pre id="raw-thermal-receipt" className="hidden">
+{`================================
+     KanakaDurga Fireworks      
+             INVOICE            
+================================
+Invoice   : ${bill.billNumber}
+Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
+Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
+Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
+Phone     : ${bill.customerPhone || "-"}
+--------------------------------
+ITEM NAME       QTY     TOTAL(₹)
+--------------------------------
+${bill.items
+  .map(
+    (item) =>
+      `${item.name.padEnd(14, " ").substring(0, 14)} ${String(item.quantity).padStart(3, " ")}  ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
+  )
+  .join("\n")}
+--------------------------------
+Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
+Discount        :-₹${Number(bill.discount || 0).toFixed(2)}
+GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
+--------------------------------
+Payment Mode    : ${bill.paymentMethod.toUpperCase()}
+================================
+    Thank you for your visit!   
+        Please Visit Again      
+================================`}
+              </pre>
+
+              {/* SCREEN UI DISPLAY (Rich Web Invoice) */}
               <div
                 id="printable-receipt"
                 className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden"
@@ -206,28 +243,6 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
                       <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Date</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {formatDate(bill.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer Information */}
-                <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Customer Name
-                      </p>
-                      <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">
-                        {bill.customerName || "Walk-in Customer"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Customer Phone
-                      </p>
-                      <p className="mt-0.5 font-semibold text-gray-900 dark:text-white">
-                        {bill.customerPhone || "-"}
                       </p>
                     </div>
                   </div>
