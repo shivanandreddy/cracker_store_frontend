@@ -33,6 +33,9 @@ const BillDetailsModal = ({ billId, isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+  const discountValue = Number(bill?.discount || 0);
+  const hasDiscount = discountValue > 0;
+
   const handleWhatsApp = () => {
     if (!bill) return;
     const phone = bill.customerPhone?.replace(/\D/g, "");
@@ -41,6 +44,10 @@ const BillDetailsModal = ({ billId, isOpen, onClose }) => {
       alert("Customer phone number is not available.");
       return;
     }
+
+    const discountLine = hasDiscount
+      ? `Discount         : -₹${discountValue.toFixed(2)}\n`
+      : "";
 
     const message = 
 `\`\`\`
@@ -65,8 +72,7 @@ ${bill.items
   .join("\n")}
 --------------------------------
 Subtotal         : ₹${Number(bill.subtotal).toFixed(2)}
-Discount         : -₹${Number(bill.discount || 0).toFixed(2)}
-GRAND TOTAL      : ₹${Number(bill.grandTotal).toFixed(2)}
+${discountLine}GRAND TOTAL      : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
 Payment Mode: ${bill.paymentMethod.toUpperCase()}
 ================================
@@ -94,18 +100,22 @@ Payment Mode: ${bill.paymentMethod.toUpperCase()}
   const handleBluetoothPrint = async () => {
     if (!bill) return;
 
+    const discountLineBT = hasDiscount
+      ? `Discount        :-₹${discountValue.toFixed(2)}\n`
+      : "";
+
     const receiptText = 
 `================================
      KanakaDurga Fireworks      
              INVOICE            
 ================================
-Invoice   : ${bill.billNumber}
-Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
-Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
-Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
-Phone     : ${bill.customerPhone || "-"}
+ Invoice   : ${bill.billNumber}
+ Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
+ Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
+ Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
+ Phone     : ${bill.customerPhone || "-"}
 --------------------------------
-ITEM NAME       QTY     TOTAL(₹)
+ ITEM NAME       QTY     TOTAL(₹)
 --------------------------------
 ${bill.items
   .map(
@@ -114,11 +124,10 @@ ${bill.items
   )
   .join("\n")}
 --------------------------------
-Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
-Discount        :-₹${Number(bill.discount || 0).toFixed(2)}
-GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
+ Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
+${discountLineBT}GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
-Payment Mode    : ${bill.paymentMethod.toUpperCase()}
+ Payment Mode    : ${bill.paymentMethod.toUpperCase()}
 ================================
     Thank you for your visit!   
         Please Visit Again      
@@ -257,26 +266,25 @@ Payment Mode    : ${bill.paymentMethod.toUpperCase()}
      KanakaDurga Fireworks      
              INVOICE            
 ================================
-Invoice   : ${bill.billNumber}
-Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
-Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
-Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
-Phone     : ${bill.customerPhone || "-"}
+ Invoice   : ${bill.billNumber}
+ Date      : ${new Date(bill.createdAt).toLocaleDateString("en-GB").replace(/\//g, "-")}
+ Time      : ${new Date(bill.createdAt).toLocaleTimeString("en-GB")}
+ Customer  : ${(bill.customerName || "Walk-in").substring(0, 18)}
+ Phone     : ${bill.customerPhone || "-"}
 --------------------------------
-ITEM NAME       QTY     TOTAL(₹)
+ ITEM NAME       QTY     TOTAL(₹)
 --------------------------------
-${bill.items
+ ${bill.items
   .map(
     (item) =>
       `${item.name.padEnd(14, " ").substring(0, 14)} ${String(item.quantity).padStart(3, " ")}  ${String(Number(item.total).toFixed(2)).padStart(8, " ")}`
   )
   .join("\n")}
 --------------------------------
-Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
-Discount        :-₹${Number(bill.discount || 0).toFixed(2)}
-GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
+ Subtotal        : ₹${Number(bill.subtotal).toFixed(2)}
+ ${hasDiscount ? `Discount        :-₹${discountValue.toFixed(2)}\n` : ""}GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
 --------------------------------
-Payment Mode    : ${bill.paymentMethod.toUpperCase()}
+ Payment Mode    : ${bill.paymentMethod.toUpperCase()}
 ================================
     Thank you for your visit!   
         Please Visit Again      
@@ -355,10 +363,12 @@ Payment Mode    : ${bill.paymentMethod.toUpperCase()}
                       <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
                       <span className="font-medium text-gray-900 dark:text-white">₹{Number(bill.subtotal).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Discount</span>
-                      <span className="font-medium text-red-600">- ₹{Number(bill.discount || 0).toFixed(2)}</span>
-                    </div>
+                    {hasDiscount && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Discount</span>
+                        <span className="font-medium text-red-600">- ₹{discountValue.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                       <div className="flex justify-between items-center">
                         <span className="text-base font-bold text-gray-900 dark:text-white">Grand Total</span>

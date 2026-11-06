@@ -9,6 +9,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./components/Dashboard";
 
 import ProductList from "./pages/products/ProductList";
+import ProductsTable from "./pages/products/ProductsTable";
 import AddProduct from "./pages/products/AddProduct";
 import EditProduct from "./pages/products/EditProduct";
 import DeleteProduct from "./pages/products/DeleteProduct";
@@ -25,10 +26,11 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public */}
+          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/available_products" element={<ProductsTable />} /> 
 
-          {/* Protected */}
+          {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import BillDetailsModal from "./BillDetailsModal"; // Adjust path to your modal component if needed
 
 const CreateBill = () => {
   const navigate = useNavigate();
@@ -21,6 +22,10 @@ const CreateBill = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Modal State for showing created bill
+  const [createdBillId, setCreatedBillId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Product search
   const [productSearch, setProductSearch] = useState("");
@@ -347,15 +352,15 @@ const CreateBill = () => {
 
       setSuccess("Bill created successfully.");
 
-      const billId = response.data.bill?._id;
+      const billId = response.data.bill?._id || response.data.bill?.id;
 
-      setTimeout(() => {
-        if (billId) {
-          navigate(`/billing/${billId}`);
-        } else {
-          navigate("/billing");
-        }
-      }, 800);
+      if (billId) {
+        // Open the modal instead of navigating away
+        setCreatedBillId(billId);
+        setIsModalOpen(true);
+      } else {
+        throw new Error("Bill ID not returned from server.");
+      }
     } catch (error) {
       console.error("Create Bill Error:", error);
 
@@ -617,26 +622,13 @@ const CreateBill = () => {
               </div>
             </div>
 
-            {/* ================================================== */}
-            {/* ONLY PRINT THIS SECTION: Selected Items Table      */}
-            {/* ================================================== */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 print:border-none print:shadow-none print:p-0">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-800 print:px-0 print:pt-0">
+            {/* Selected Items Table */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white print:text-xl print:font-bold">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Bill Items
                   </h2>
-
-                  {/* Print trigger button on screen */}
-                  {items.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => window.print()}
-                      className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 print:hidden cursor-pointer"
-                    >
-                      🖨️ Print Items
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -645,180 +637,105 @@ const CreateBill = () => {
                   No products added to the bill yet.
                 </div>
               ) : (
-                <>
-                  {/* Table (Always visible in Print, and desktop on screen) */}
-                  <div className="hidden md:block print:block overflow-x-auto print:overflow-visible">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 dark:bg-gray-800 print:bg-transparent print:border-b-2 print:border-gray-300">
-                        <tr>
-                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Product
-                          </th>
-                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Item Code
-                          </th>
-                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Quantity
-                          </th>
-                          <th className="text-left px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Rate
-                          </th>
-                          
-                          
-                          <th className="text-right px-6 py-4 print:px-2 print:py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 print:text-black">
-                            Total
-                          </th>
-                          <th className="px-6 py-4 print:hidden"></th>
-                        </tr>
-                      </thead>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                      <tr>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          Product
+                        </th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          Item Code
+                        </th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          Quantity
+                        </th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          Rate
+                        </th>
+                        <th className="text-right px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          Total
+                        </th>
+                        <th className="px-6 py-4"></th>
+                      </tr>
+                    </thead>
 
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-800 print:divide-gray-300">
-                        {items.map((item) => (
-                          <tr key={item.productId} className="print:border-b print:border-gray-200">
-                            <td className="px-6 py-4 print:px-2 print:py-2">
-                              <p className="font-medium text-gray-900 dark:text-white print:text-black">
-                                {item.name}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">
-                                {item.unit}
-                              </p>
-                            </td>
-                            <td className="px-6 py-4 print:px-2 print:py-2 text-gray-700 dark:text-gray-300 print:text-black">
-                              {(item.purchasePrice)}
-                            </td>
-                            <td className="px-6 py-4 print:px-2 print:py-2">
-                              {/* Quantity in Print View: plain text */}
-                              <span className="hidden print:inline font-medium text-black">
-                                {item.quantity}
-                              </span>
-
-                              {/* Interactive controls in Screen View */}
-                              <div className="flex items-center gap-2 print:hidden">
-                                <button
-                                  type="button"
-                                  onClick={() => decreaseQuantity(item.productId)}
-                                  className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                                >
-                                  -
-                                </button>
-
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max={item.stockQuantity}
-                                  value={item.quantity}
-                                  onChange={(e) =>
-                                    updateQuantity(
-                                      item.productId,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-16 text-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-1.5 text-gray-900 dark:text-white"
-                                />
-
-                                <button
-                                  type="button"
-                                  onClick={() => increaseQuantity(item.productId)}
-                                  className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </td>
-
-                            <td className="px-6 py-4 print:px-2 print:py-2 text-gray-700 dark:text-gray-300 print:text-black">
-                              ₹{(item.price || 0).toFixed(2)}
-                            </td>
-
-                            
-
-                            
-
-                            <td className="px-6 py-4 print:px-2 print:py-2 text-right font-semibold text-gray-900 dark:text-white print:text-black">
-                              ₹{(item.price * item.quantity).toFixed(2)}
-                            </td>
-
-                            <td className="px-6 py-4 print:hidden">
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                      {items.map((item) => (
+                        <tr key={item.productId}>
+                          <td className="px-6 py-4">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {item.unit}
+                            </p>
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                            {item.purchasePrice}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => removeItem(item.productId)}
-                                className="text-red-600 hover:text-red-700 text-sm font-medium"
+                                onClick={() => decreaseQuantity(item.productId)}
+                                className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                               >
-                                Remove
+                                -
                               </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
 
-                  {/* Mobile Screen List (Hidden on Print so table is printed uniformly) */}
-                  <div className="md:hidden print:hidden p-4 space-y-4">
-                    {items.map((item) => (
-                      <div
-                        key={item.productId}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
-                      >
-                        <div className="flex justify-between gap-3">
-                          <div className="min-w-0">
-                            <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                              {item.name}
-                            </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Selling: ₹{(item.price || 0).toFixed(2)} / {item.unit}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Purchased : ₹{(item.purchasePrice || 0).toFixed(2)}
-                            </p>
-                          </div>
+                              <input
+                                type="number"
+                                min="1"
+                                max={item.stockQuantity}
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  updateQuantity(
+                                    item.productId,
+                                    e.target.value
+                                  )
+                                }
+                                className="w-16 text-center rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-1.5 text-gray-900 dark:text-white"
+                              />
 
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item.productId)}
-                            className="text-red-600 text-sm shrink-0"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                              <button
+                                type="button"
+                                onClick={() => increaseQuantity(item.productId)}
+                                className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </td>
 
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => decreaseQuantity(item.productId)}
-                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                            >
-                              -
-                            </button>
+                          <td className="px-6 py-4 text-gray-700 dark:text-gray-300">
+                            ₹{(item.price || 0).toFixed(2)}
+                          </td>
 
-                            <span className="w-8 text-center font-medium text-gray-900 dark:text-white">
-                              {item.quantity}
-                            </span>
-
-                            <button
-                              type="button"
-                              onClick={() => increaseQuantity(item.productId)}
-                              className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          <span className="font-semibold text-gray-900 dark:text-white">
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">
                             ₹{(item.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.productId)}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
 
-          {/* RIGHT SIDE - SUMMARY - Hidden on Print */}
-          <div className="xl:col-span-1 print:hidden">
+          {/* RIGHT SIDE - SUMMARY */}
+          <div className="xl:col-span-1">
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 sticky top-6">
               <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -943,6 +860,16 @@ const CreateBill = () => {
           </div>
         </div>
       </form>
+
+      {/* Bill Details Modal Popup after successful bill creation */}
+      <BillDetailsModal
+        billId={createdBillId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          navigate("/billing"); // Redirect to billing list or dashboard when closing modal
+        }}
+      />
     </div>
   );
 };
