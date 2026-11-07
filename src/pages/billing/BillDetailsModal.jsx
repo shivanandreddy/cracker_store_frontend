@@ -334,7 +334,8 @@ ${discountLineBT}GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
                           <th className="text-left py-2.5 pr-4 font-semibold text-gray-600 dark:text-gray-300">#</th>
                           <th className="text-left py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Product</th>
                           <th className="text-center py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Qty</th>
-                          <th className="text-right py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300">Price</th>
+                          <th className="text-right py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Selling Price</th>
+                          <th className="text-right py-2.5 px-4 font-semibold text-gray-600 dark:text-gray-300 whitespace-nowrap">Purchase Price</th>
                           <th className="text-right py-2.5 pl-4 font-semibold text-gray-600 dark:text-gray-300">Total</th>
                         </tr>
                       </thead>
@@ -347,8 +348,13 @@ ${discountLineBT}GRAND TOTAL     : ₹${Number(bill.grandTotal).toFixed(2)}
                             <td className="py-3 pr-4 text-gray-500 dark:text-gray-400">{index + 1}</td>
                             <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{item.name}</td>
                             <td className="py-3 px-4 text-center text-gray-700 dark:text-gray-300">{item.quantity}</td>
-                            <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300">₹{Number(item.price).toFixed(2)}</td>
-                            <td className="py-3 pl-4 text-right font-medium text-gray-900 dark:text-white">₹{Number(item.total).toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right text-gray-700 dark:text-gray-300 whitespace-nowrap">₹{Number(item.price).toFixed(2)}</td>
+                            <td className="py-3 px-4 text-right font-medium text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                              {item.purchase_price != null
+                                ? `₹${Number(item.purchase_price).toFixed(2)}`
+                                : "-"}
+                            </td>
+                            <td className="py-3 pl-4 text-right font-medium text-gray-900 dark:text-white whitespace-nowrap">₹{Number(item.total).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>

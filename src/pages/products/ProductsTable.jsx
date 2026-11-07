@@ -1,34 +1,40 @@
+
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import api from "../../services/api";
-import Navbar from "../../components/Navbar";
+import Topbar from "../../components/Topbar";
+import DiscountBanner from "../../components/DiscountBanner";
 
 const ProductsTable = ({ onEdit, onDelete }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Search & Pagination states
+  // Search & Pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const limit = 10; // Exactly 10 items per page
+  const limit = 10;
 
-  // Fetch all products once on mount
+  // Fetch Products
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError("");
-      
+
       const response = await api.get("/products");
-      
-      const data = Array.isArray(response.data) 
-        ? response.data 
-        : response.data.products || response.data.data || [];
-        
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.products ||
+          response.data?.data ||
+          [];
+
       setAllProducts(data);
     } catch (err) {
       console.error("Fetch Products Error:", err);
-      setError(err.response?.data?.message || "Failed to load products.");
+      setError(
+        err.response?.data?.message || "Failed to load products."
+      );
     } finally {
       setLoading(false);
     }
@@ -38,9 +44,10 @@ const ProductsTable = ({ onEdit, onDelete }) => {
     fetchProducts();
   }, []);
 
-  // Filter products based on search query
+  // Filter Products
   const filteredProducts = allProducts.filter((product) => {
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
+
     return (
       product.name?.toLowerCase().includes(query) ||
       product.sku?.toLowerCase().includes(query) ||
@@ -48,47 +55,66 @@ const ProductsTable = ({ onEdit, onDelete }) => {
     );
   });
 
-  // Calculate pagination
+  // Pagination
   const totalPages = Math.ceil(filteredProducts.length / limit) || 1;
+
+  // Keep current page valid
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const startIndex = (currentPage - 1) * limit;
-  const currentProducts = filteredProducts.slice(startIndex, startIndex + limit);
+
+  const currentProducts = filteredProducts.slice(
+    startIndex,
+    startIndex + limit
+  );
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col w-full">
-      <Navbar />
+    <div className="w-full min-w-0 min-h-screen flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
 
-      {/* Header and Search Bar Section */}
-      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white self-start sm:self-center">
-          Product Inventory
+      <Topbar />
+
+      <DiscountBanner />
+
+      {/* Header & Search */}
+      <div className="w-full min-w-0 p-3 sm:p-4 md:p-6 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap ">
+          Checkout Crackers
         </h2>
-        
-        {/* Search Input Bar */}
-        <div className="relative w-full sm:w-72">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-            <Search size={16} />
-          </span>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-64 md:w-72">
+          <Search
+            size={17}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          />
+
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setCurrentPage(1); // Reset to page 1 on search change
+              setCurrentPage(1);
             }}
             placeholder="Search by name, SKU..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full min-w-0 pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
         </div>
       </div>
 
-      {/* Content Area */}
-      <div className="flex-1 p-2 sm:p-0">
+      {/* Content */}
+      <div className="flex-1 min-w-0 w-full">
+
         {loading ? (
           <div className="py-12 text-center text-gray-500 animate-pulse text-sm">
             Loading products...
           </div>
         ) : error ? (
-          <div className="py-12 text-center text-red-600 dark:text-red-400 text-sm">
+          <div className="py-12 px-4 text-center text-red-600 dark:text-red-400 text-sm">
             {error}
           </div>
         ) : currentProducts.length === 0 ? (
@@ -96,102 +122,105 @@ const ProductsTable = ({ onEdit, onDelete }) => {
             No products found.
           </div>
         ) : (
-          <>
-            {/* MOBILE VIEW: Card Stack Layout (Visible on small screens) */}
-            <div className="block md:hidden space-y-3 p-2">
-              {currentProducts.map((product, index) => (
-                <div 
-                  key={product._id} 
-                  className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 space-y-2 shadow-xs"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                        #{startIndex + index + 1} • SKU: {product.sku || "N/A"}
-                      </span>
-                      <h3 className="text-sm font-bold text-gray-900 dark:text-white">
-                        {product.name}
-                      </h3>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${product.stockQuantity > 5 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                      Stock: {product.stockQuantity} {product.unit}
-                    </span>
-                  </div>
+          /* Responsive Table */
+          <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
 
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-gray-200 dark:border-gray-700/60">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Category: <span className="font-medium text-gray-700 dark:text-gray-300">{product.category}</span>
-                    </span>
-                    <span className="font-bold text-blue-600 dark:text-blue-400 text-sm">
+            <table className="w-full min-w-[420px] text-sm text-left border-collapse">
+
+              <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
+                <tr>
+                  <th className="py-3 px-3 sm:px-4 font-semibold w-12 sm:w-16">
+                    #
+                  </th>
+
+                  <th className="py-3 px-3 sm:px-4 font-semibold">
+                    Product Name
+                  </th>
+
+                  <th className="py-3 px-3 sm:px-4 font-semibold whitespace-nowrap">
+                    Price (₹)
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
+
+                {currentProducts.map((product, index) => (
+                  <tr
+                    key={product._id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <td className="py-3.5 px-3 sm:px-4 text-gray-500 whitespace-nowrap">
+                      {startIndex + index + 1}
+                    </td>
+
+                    <td className="py-3.5 px-3 sm:px-4 font-medium text-gray-900 dark:text-white break-words">
+                      {product.name}
+                    </td>
+
+                    <td className="py-3.5 px-3 sm:px-4 font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
                       ₹{Number(product.sellingPrice).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* DESKTOP/TABLET VIEW: Standard Table Layout (Visible on medium screens and up) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold w-16">#</th>
-                    <th className="py-3 px-4 font-semibold">Product Name</th>
-                    <th className="py-3 px-4 font-semibold">SKU</th>
-                    <th className="py-3 px-4 font-semibold">Category</th>
-                    <th className="py-3 px-4 text-right font-semibold">Selling (₹)</th>
-                    <th className="py-3 px-4 text-center font-semibold">Stock</th>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-gray-700 dark:text-gray-300">
-                  {currentProducts.map((product, index) => (
-                    <tr key={product._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-                      <td className="py-3 px-4 text-gray-500">
-                        {startIndex + index + 1}
-                      </td>
-                      <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">
-                        {product.name}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-xs text-gray-500">{product.sku}</td>
-                      <td className="py-3 px-4">{product.category}</td>
-                      <td className="py-3 px-4 text-right font-medium text-blue-600">
-                        ₹{Number(product.sellingPrice).toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${product.stockQuantity > 5 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                          {product.stockQuantity} {product.unit}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
+                ))}
+
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Pagination Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3 gap-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 dark:text-gray-400">
-        <div>
-          Page <span className="font-semibold text-gray-900 dark:text-white">{currentPage}</span> of{" "}
-          <span className="font-semibold text-gray-900 dark:text-white">{totalPages}</span>
+      {/* Pagination */}
+      <div className="w-full min-w-0 flex flex-col xs:flex-row sm:flex-row items-center justify-between px-3 sm:px-5 md:px-6 py-3 gap-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+
+        {/* Page Information */}
+        <div className="text-xs text-gray-500 dark:text-gray-400 text-center sm:text-left">
+          Showing{" "}
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {filteredProducts.length === 0 ? 0 : startIndex + 1}
+          </span>
+          {" - "}
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {Math.min(startIndex + limit, filteredProducts.length)}
+          </span>
+          {" of "}
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {filteredProducts.length}
+          </span>
+          {" products"}
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-center gap-2">
+
           <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.max(prev - 1, 1))
+            }
             disabled={currentPage === 1 || loading}
-            className="p-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
+            aria-label="Previous page"
+            className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={17} />
           </button>
+
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-300 px-2 whitespace-nowrap">
+            Page {currentPage} of {totalPages}
+          </span>
+
           <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) =>
+                Math.min(prev + 1, totalPages)
+              )
+            }
             disabled={currentPage >= totalPages || loading}
-            className="p-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
+            aria-label="Next page"
+            className="p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition cursor-pointer"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={17} />
           </button>
+
         </div>
       </div>
 
