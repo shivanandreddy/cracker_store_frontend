@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import api from "../../services/api";
-import Topbar from "../../components/Topbar";
+import TopBar from "../../components/TopBar";
 import DiscountBanner from "../../components/DiscountBanner";
 
 const ProductsTable = ({ onEdit, onDelete }) => {
@@ -75,7 +75,7 @@ const ProductsTable = ({ onEdit, onDelete }) => {
   return (
     <div className="w-full min-w-0 min-h-screen flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
 
-      <Topbar />
+      <TopBar />
 
       <DiscountBanner />
 
