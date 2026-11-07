@@ -12,7 +12,7 @@ const DiscountBanner = ({ onClose }) => {
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+    <div className="relative w-full overflow-hidden shadow-lg transition-all duration-300 animate-in fade-in slide-in-from-top-4">
       
       {/* Banner Image */}
       <img 
