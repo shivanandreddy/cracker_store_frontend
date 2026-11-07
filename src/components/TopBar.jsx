@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Moon, Sun, Sparkles } from 'lucide-react';
 
-const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
+const Topbar = ({ sidebarOpen, setSidebarOpen }) => {
   const [darkMode, setDarkMode] = useState(() => {
     return (
       localStorage.getItem('theme') === 'dark' ||
@@ -54,4 +54,4 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   );
 };
 
-export default Navbar;
+export default Topbar;
