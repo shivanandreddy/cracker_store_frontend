@@ -120,7 +120,7 @@ const ProductsTable = ({ onEdit, onDelete }) => {
         ) : (
           <div className="w-full min-w-0 overflow-x-auto">
             <table className="w-full min-w-[360px] text-sm text-left border-collapse">
-              <thead className="  text-gray-600 dark:text-gray-300 uppercase text-xs tracking-wider bg-yellow-800">
+              <thead className="  text-white  uppercase text-xs tracking-wider bg-yellow-800">
                 <tr>
                   <th className="py-3.5 px-4 font-bold w-16 sm:w-20">#</th>
                   <th className="py-3.5 px-4 font-bold">Product Name</th>
