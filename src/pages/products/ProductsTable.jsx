@@ -72,7 +72,7 @@ const ProductsTable = ({ onEdit, onDelete }) => {
   );
 
   return (
-    <div className="w-full min-w-0 min-h-[calc(100vh-4rem)] flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm rounded-xl overflow-hidden mb-6">
+    <div className="w-full min-w-0 min-h-[calc(100vh-4rem)] flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm  overflow-hidden mb-6">
 
       {/* Top Elements */}
       <TopBar />
